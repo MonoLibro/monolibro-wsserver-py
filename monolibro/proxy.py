@@ -1,4 +1,5 @@
 from typing import Dict, Union
+from models.message import Message
 from . import AsyncEventHandler, EventHandler, Intention
 import websockets
 import asyncio
@@ -31,7 +32,11 @@ class Proxy:
                 raw_messages = (await ws.recv()).split(".")
                 decoded = [base64.b64decode(i + '=' * (4 - len(i) % 4)).decode() for i in raw_messages]
                 signature = decoded[1]
-                message = json.loads(decoded[0])
+                message = Message(json.loads(decoded[0]))
+                if (message.details["intention"] in self.handlers):
+                    self.handlers[message.details["intention"]]()
+                if (message.details["intention"] in self.async_handlers):
+                    await (self.handlers[message.details["intention"]]())
 
         return internal_handler
 
