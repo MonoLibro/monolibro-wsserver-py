@@ -1,6 +1,6 @@
 import asyncio
-import ws
+import monolibro
 
-wss = ws.Server("localhost", 3200)
+wss = monolibro.Proxy("localhost", 3200)
 
 asyncio.run(wss.start())
