@@ -1,5 +1,5 @@
 from enum import Enum
 
 
-class EventType(Enum):
+class Intention(Enum):
     pass
