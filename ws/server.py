@@ -28,8 +28,8 @@ class Server:
             while True:
                 raw_messages = (await ws.recv()).split(".")
                 decoded = [base64.b64decode(i + '=' * (4 - len(i) % 4)).decode() for i in raw_messages]
-                signature = decoded[0]
-                message = json.loads(decoded[1])
+                signature = decoded[1]
+                message = json.loads(decoded[0])
 
         return internal_handler
 
