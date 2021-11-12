@@ -1,14 +1,9 @@
 import asyncio
-import websockets
+from controls.websocket_server import WebSocketServer
 
-
-async def handler(ws, path):
-    pass
-
+web_socket_server = WebSocketServer("localhost", 3200)
 
 async def main():
-    async with websockets.serve(handler, "127.0.0.1", 3200):
-        await asyncio.Future()
-
+    await web_socket_server.start()
 
 asyncio.run(main())
