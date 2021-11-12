@@ -1,9 +1,6 @@
 import asyncio
-from controls.websocket_server import WebSocketServer
+import ws
 
-web_socket_server = WebSocketServer("localhost", 3200)
+wss = ws.Server("localhost", 3200)
 
-async def main():
-    await web_socket_server.start()
-
-asyncio.run(main())
+asyncio.run(wss.start())
