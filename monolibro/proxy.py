@@ -2,6 +2,8 @@ from typing import Dict, Union
 from . import AsyncEventHandler, EventHandler, EventType
 import websockets
 import asyncio
+import base64
+import json
 
 
 class Proxy:
@@ -25,7 +27,11 @@ class Proxy:
 
     def _get_internal_handlers(self):
         async def internal_handler(ws, path):
-            pass
+            while True:
+                raw_messages = (await ws.recv()).split(".")
+                decoded = [base64.b64decode(i + '=' * (4 - len(i) % 4)).decode() for i in raw_messages]
+                signature = decoded[1]
+                message = json.loads(decoded[0])
 
         return internal_handler
 
