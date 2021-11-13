@@ -9,9 +9,11 @@ import json
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int) -> None:
+    def __init__(self, ip: str, port: int, logger) -> None:
         self.ip = ip
         self.port = port
+
+        self.logger = logger
 
         self.users = {}
 
@@ -54,5 +56,6 @@ class Proxy:
         return internal_handler
 
     async def start(self) -> None:
+        self.logger.info(f"Listening on ws://{self.ip}:{self.port}")
         async with websockets.serve(self._get_internal_handlers(), self.ip, self.port):
             await asyncio.Future()
