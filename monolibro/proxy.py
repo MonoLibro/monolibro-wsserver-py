@@ -1,18 +1,17 @@
 from typing import Dict, Union
-import utils.base64
+import utils
 from .models import Message, User
 from . import AsyncEventHandler, EventHandler, Intention
 import websockets
 import asyncio
 import json
+from loguru import logger
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int, logger) -> None:
+    def __init__(self, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
-
-        self.logger = logger
 
         self.users = {}
 
@@ -64,6 +63,6 @@ class Proxy:
         return internal_handler
 
     async def start(self) -> None:
-        self.logger.info(f"Listening on ws://{self.ip}:{self.port}")
+        logger.info(f"Listening on ws://{self.ip}:{self.port}")
         async with websockets.serve(self._get_internal_handlers(), self.ip, self.port):
             await asyncio.Future()
