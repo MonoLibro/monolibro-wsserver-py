@@ -1,9 +1,9 @@
 from typing import Dict, Union
-from models.message import Message
+import utils.base64
+from .models import Message
 from . import AsyncEventHandler, EventHandler, Intention
 import websockets
 import asyncio
-import base64
 import json
 
 
@@ -29,14 +29,23 @@ class Proxy:
     def _get_internal_handlers(self):
         async def internal_handler(ws, path):
             while True:
-                raw_messages = (await ws.recv()).split(".")
-                decoded = [base64.b64decode(i + '=' * (4 - len(i) % 4)).decode() for i in raw_messages]
-                signature = decoded[1]
-                message = Message(json.loads(decoded[0]))
-                if (message.details["intention"] in self.handlers):
-                    self.handlers[message.details["intention"]]()
-                if (message.details["intention"] in self.async_handlers):
-                    await (self.handlers[message.details["intention"]]())
+                raw_message_slices = (await ws.recv()).split(".")
+                if len(raw_message_slices) != 2:
+                    return
+
+                decoded_raw_message_slices = [
+                    utils.base64.decode_base64_url_no_padding(msg_slice).decode("utf_8")
+                    for msg_slice in raw_message_slices
+                ]
+
+                message = Message(json.loads(decoded_raw_message_slices[0]))
+                intention = message.details["intention"]
+                if intention in self.handlers:
+                    self.handlers[intention]()
+                if intention in self.async_handlers:
+                    await self.async_handlers[intention]()
+
+                signature = decoded_raw_message_slices[1]
 
         return internal_handler
 
