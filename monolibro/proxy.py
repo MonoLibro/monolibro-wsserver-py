@@ -1,5 +1,6 @@
 from typing import Dict, Union
 from models.message import Message
+from models.user import User
 from . import AsyncEventHandler, EventHandler, Intention
 import websockets
 import asyncio
@@ -12,8 +13,20 @@ class Proxy:
         self.ip = ip
         self.port = port
 
+        self.users = {}
+
         self.async_handlers: Dict[Intention, AsyncEventHandler] = {}
         self.handlers: Dict[Intention, EventHandler] = {}
+
+    def join(self, connection, user_id):
+        if not (user_id in self.users):
+            self.users[user_id] = User(user_id)
+        self.users[user_id].join(connection)
+
+    def leave(self, connection, user_id):
+        self.users[user_id].leave(connection)
+        if self.users[user_id].is_empty():
+            del self.users[user_id]
 
     def handler(self, intention: Intention):
         def wrapper(func: Union[EventHandler, AsyncEventHandler]):
