@@ -22,6 +22,9 @@ def main(config_path: str, debug: bool):
     if debug:
         logger.remove()
         logger.add(sys.stdout, level="DEBUG")
+    else:
+        logger.remove()
+        logger.add(sys.stdout, level="INFO")
 
     config = utils.config.create_if_not_exists(config_path, default_config)
 
