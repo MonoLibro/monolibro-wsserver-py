@@ -2,11 +2,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from .details import Details
 
 
 class Payload(BaseModel):
     version: int
     sessionID: str
-    details: dict[str, Any]
+    details: Details
     operation: str
     data: dict[str, Any]
