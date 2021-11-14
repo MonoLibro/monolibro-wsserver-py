@@ -1,6 +1,8 @@
 import asyncio
-import monolibro
+
 import click
+
+import monolibro
 
 
 @click.command()

@@ -1,11 +1,13 @@
-from typing import Dict, Union
-import utils
-from .models import Message, User
-from . import AsyncEventHandler, EventHandler, Intention
-import websockets
 import asyncio
 import json
+from typing import Dict, Union
+
+import websockets
 from loguru import logger
+
+import utils
+from . import AsyncEventHandler, EventHandler, Intention
+from .models import Message, User
 
 
 class Proxy:
