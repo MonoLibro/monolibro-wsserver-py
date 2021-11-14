@@ -52,7 +52,7 @@ class Proxy:
                     return
 
                 decoded_raw_message_slices = [
-                    utils.base64.decode_base64_url_no_padding(msg_slice).decode("utf_8")
+                    utils.base64.decode_url_no_padding(msg_slice).decode("utf_8")
                     for msg_slice in raw_message_slices
                 ]
 
@@ -70,6 +70,7 @@ class Proxy:
                     return
 
                 signature = decoded_raw_message_slices[1]
+
 
         return internal_handler
 
