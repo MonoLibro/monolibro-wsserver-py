@@ -36,8 +36,12 @@ class Proxy:
     def handler(self, intention: Intention):
         def wrapper(func: Union[EventHandler, AsyncEventHandler]):
             if asyncio.iscoroutinefunction(func):
+                if intention.value not in self.async_handlers:
+                    self.async_handlers[intention.value] = []
                 self.async_handlers[intention.value].append(func)
             else:
+                if intention.value not in self.handlers:
+                    self.async_handlers[intention.value] = []
                 self.handlers[intention.value].append(func)
 
             return func
