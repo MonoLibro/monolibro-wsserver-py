@@ -15,10 +15,13 @@ def register(handler):
             await ws.close()
             return
         user_id = data["userID"]
-        logger.info(f"A client of {user_id} has joined the network.")
         if user_id not in proxy.users:
             proxy.users[user_id] = User(id=user_id)
-        proxy.users[user_id].clients.append(ws)
+        if ws not in proxy.users[user_id].clients:
+            proxy.users[user_id].clients.append(ws)
+            logger.info(f"A client of {user_id} has joined the network.")
+        else:
+            logger.warning(f"A client of {user_id} trys to join the network while already being in the network. Ignoring.")
         logger.debug(f"The id of the ws object is {id(ws)}")
 
 
