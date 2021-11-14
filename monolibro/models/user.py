@@ -1,6 +1,6 @@
-from monolibro.model import Model
+from pydantic import BaseModel
 
 
-class User(Model):
-    id: str = None
-    clients: [] = None
+class User(BaseModel):
+    id: str
+    clients: list

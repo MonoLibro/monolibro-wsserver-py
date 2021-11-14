@@ -1,9 +1,12 @@
-from monolibro.model import Model
+from typing import Any
+
+from pydantic import BaseModel
 
 
-class Payload(Model):
-    version: int = None
-    sessionID: str = None
-    details: dict = None
-    operation: str = None
-    data: dict = None
+
+class Payload(BaseModel):
+    version: int
+    sessionID: str
+    details: dict[str, Any]
+    operation: str
+    data: dict[str, Any]
