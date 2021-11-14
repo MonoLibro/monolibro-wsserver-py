@@ -1,5 +1,7 @@
-from monolibro.models import Intention
 from loguru import logger
+
+from monolibro.models import Intention
+
 
 def register(proxy):
     logger.info("Registering intentions")

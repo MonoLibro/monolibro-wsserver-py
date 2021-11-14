@@ -22,11 +22,10 @@ class OperationHandler:
                 if operation.value not in self.handlers:
                     self.handlers[operation.value] = []
                 self.handlers[operation.value].append(func)
-            
+
             return func
 
         return wrapper
-    
 
     async def handle(self, ws, proxy, payload, signature):
         operation = payload.operation.value

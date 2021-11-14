@@ -2,8 +2,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from .operation import Operation
 from .details import Details
+from .operation import Operation
 
 
 class Payload(BaseModel):

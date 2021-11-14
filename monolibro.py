@@ -14,6 +14,7 @@ default_config = Config()
 
 import handlers
 
+
 @click.command()
 @click.option("-c", "--config", "config_path", type=str, default="config.json", help="Configuration file path.")
 @click.option("-d", "--debug", default=False, type=bool, help="Debug mode.", is_flag=True)
