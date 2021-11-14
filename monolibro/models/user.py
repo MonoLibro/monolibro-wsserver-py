@@ -1,13 +1,6 @@
-class User:
-    def __init__(self, username):
-        self.username = username
-        self.clients = []
+from pydantic import BaseModel
 
-    def join(self, client):
-        self.clients.append(client)
-    
-    def leave(self, client):
-        self.pop(self.clients.index(client))
-    
-    def is_empty(self):
-        return len(self.clients) == 0
+
+class User(BaseModel):
+    id: str
+    clients: list = []
