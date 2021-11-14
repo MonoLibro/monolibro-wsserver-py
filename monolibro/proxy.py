@@ -1,5 +1,6 @@
 import asyncio
 import json
+from logging import log
 from typing import Union
 
 import websockets
@@ -36,8 +37,12 @@ class Proxy:
     def handler(self, intention: Intention):
         def wrapper(func: Union[EventHandler, AsyncEventHandler]):
             if asyncio.iscoroutinefunction(func):
+                if intention.value not in self.async_handlers:
+                    self.async_handlers[intention.value] = []
                 self.async_handlers[intention.value].append(func)
             else:
+                if intention.value not in self.handlers:
+                    self.handlers[intention.value] = []
                 self.handlers[intention.value].append(func)
 
             return func
@@ -57,20 +62,19 @@ class Proxy:
                 ]
 
                 try:
+                    logger.debug(f"Paring Message")
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
-
+                    signature = decoded_raw_message_slices[1]
                     intention = payload.details.intention.value
                     if intention in self.handlers:
                         for handler in self.handlers[intention]:
-                            handler()
+                            handler(ws, self, payload, signature)
                     if intention in self.async_handlers:
                         for async_handler in self.async_handlers[intention]:
-                            await async_handler()
-                except ValidationError:
+                            await async_handler(ws, self, payload, signature)
+                except ValidationError as e:
+                    logger.debug(f"Velidation Error: {e.json()}")
                     return
-
-                signature = decoded_raw_message_slices[1]
-
 
         return internal_handler
 

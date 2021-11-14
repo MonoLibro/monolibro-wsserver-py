@@ -5,4 +5,4 @@ from monolibro import Intention
 
 class Details(BaseModel):
     intention: Intention
-    targetUserID: str
+    target: str
