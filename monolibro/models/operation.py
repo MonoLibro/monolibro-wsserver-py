@@ -1,0 +1,15 @@
+from enum import Enum
+
+
+class Operation(Enum):
+    SYSTEM_DEBUG = -2
+    CLIENT_DEBUG = -1
+    JOIN_NETWORK = 0
+    LEAVE_NETWORK = 1
+    CREATE_ACCUONT_INIT = 2
+    VOTE_SESSION_INIT = 3
+    VOTE_SESSION_QUERY = 4
+    REPLY = 5
+    FREEZE_ACCOUNT = 6
+    UPDATE_ACCOUNT = 7
+    JOIN_ACTIVITY = 8

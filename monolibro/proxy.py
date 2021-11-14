@@ -14,9 +14,11 @@ from .models import Payload, User
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int) -> None:
+    def __init__(self, ip: str, port: int, operation_handler) -> None:
         self.ip = ip
         self.port = port
+
+        self.operation_handler = operation_handler;
 
         self.users: dict[str, User] = {}
 
@@ -62,15 +64,19 @@ class Proxy:
                 ]
 
                 try:
-                    logger.debug(f"Paring Message")
+                    logger.debug(f"Paring Message: {decoded_raw_message_slices[0]}")
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
                     signature = decoded_raw_message_slices[1]
                     intention = payload.details.intention.value
                     if intention in self.handlers:
+                        logger.debug(f"Handling intention | {payload.sessionID}")
                         for handler in self.handlers[intention]:
+                            logger.debug(f"Calling intention handler#{id(handler)} | {payload.sessionID}")
                             handler(ws, self, payload, signature)
                     if intention in self.async_handlers:
+                        logger.debug(f"Handling async intention | {payload.sessionID}")
                         for async_handler in self.async_handlers[intention]:
+                            logger.debug(f"Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
                             await async_handler(ws, self, payload, signature)
                 except ValidationError as e:
                     logger.debug(f"Velidation Error: {e.json()}")
