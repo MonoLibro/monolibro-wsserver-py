@@ -1,5 +1,6 @@
 import sqlite3
-from . import Table
+
+from .table import Table
 
 
 class Database:
@@ -27,13 +28,13 @@ class Database:
     def execute(self, statement):
         cur = self.db.cursor()
         return cur.execute(statement)
-    
+
     def has_table(self, table_name):
         sql = f'select * from sqlite_schema where name = "{table_name}" and type = "table";'
         for i in self.execute(sql):
             return True
         return False
-    
+
     def get_table_names(self):
         sql = 'select name from sqlite_schema where type = "table";'
         return [i[0] for i in self.execute(sql)]
