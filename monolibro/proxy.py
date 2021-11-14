@@ -43,8 +43,10 @@ class Proxy:
     def _get_internal_handlers(self):
         async def internal_handler(ws, path):
             while True:
-                raw_message_slices = (await ws.recv()).split(".")
+                raw_message = await ws.recv()
+                raw_message_slices = raw_message.split(".")
                 if len(raw_message_slices) != 2:
+                    logger.info(f"Malformed message recieved: {raw_message}")
                     return
 
                 decoded_raw_message_slices = [
@@ -53,7 +55,7 @@ class Proxy:
                 ]
 
                 try:
-                    logger.debug(f"Paring Message")
+                    logger.debug(f"Parsing Message: {decoded_raw_message_slices[0]}")
 
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
 
