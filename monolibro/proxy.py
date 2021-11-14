@@ -1,6 +1,5 @@
 import asyncio
 import json
-from logging import log
 from typing import Union
 
 import websockets
@@ -9,7 +8,7 @@ from pydantic import ValidationError
 
 import utils
 from .event_handler import AsyncEventHandler, EventHandler
-from .intention import Intention
+from .models import Intention
 from .models import Payload, User
 
 
@@ -20,22 +19,11 @@ class Proxy:
 
         self.users: dict[str, User] = {}
 
-        self.async_handlers: dict[Intention, list[AsyncEventHandler]] = {}
-        self.handlers: dict[Intention, list[EventHandler]] = {}
-
-    def join(self, connection, user_id):
-        if user_id not in self.users:
-            self.users[user_id] = User(id=user_id)
-        # self.users[user_id].join(connection)
-
-    def leave(self, connection, user_id):
-        # self.users[user_id].leave(connection)
-        # if self.users[user_id].is_empty():
-        #     del self.users[user_id]
-        del self.users[user_id]
+        self.async_handlers: dict[Intention, list[AsyncMessageHandler]] = {}
+        self.handlers: dict[Intention, list[MessageHandler]] = {}
 
     def handler(self, intention: Intention):
-        def wrapper(func: Union[EventHandler, AsyncEventHandler]):
+        def wrapper(func: Union[MessageHandler, AsyncMessageHandler]):
             if asyncio.iscoroutinefunction(func):
                 if intention.value not in self.async_handlers:
                     self.async_handlers[intention.value] = []
@@ -57,14 +45,17 @@ class Proxy:
                     return
 
                 decoded_raw_message_slices = [
-                    utils.base64.decode_url_no_padding(msg_slice).decode("utf_8")
+                    utils.base64.decode_url_no_padding(msg_slice)
                     for msg_slice in raw_message_slices
                 ]
 
                 try:
                     logger.debug(f"Paring Message")
+
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
+
                     signature = decoded_raw_message_slices[1]
+
                     intention = payload.details.intention.value
                     if intention in self.handlers:
                         for handler in self.handlers[intention]:

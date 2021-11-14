@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from monolibro import Intention
+from .intention import Intention
 
 
 class Details(BaseModel):
