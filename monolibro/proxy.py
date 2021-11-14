@@ -52,16 +52,16 @@ class Proxy:
 
     def _get_internal_handlers(self):
         async def internal_handler(ws, path):
-            logger.debug(f"A client has connected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[0]}")
+            logger.debug(f"A client has connected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
             while True:
                 try:
                     raw_message = await ws.recv()
                 except websockets.exceptions.ConnectionClosedOK:
-                    logger.debug(f"A client has disconnected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[0]}")
+                    logger.debug(f"A client has disconnected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
                     self.remove_from_user(ws)
                     return
                 except websockets.exceptions.ConnectionClosedError as e:
-                    logger.warning(f"A client (#{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[0]}) has disconnected with error: {e}")
+                    logger.warning(f"A client (#{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}) has disconnected with error: {e}")
                     logger.debug(f"Trying to remove {id(ws)} from user lists")
                     self.remove_from_user(ws)
                     return
