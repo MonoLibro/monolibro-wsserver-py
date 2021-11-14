@@ -1,5 +1,6 @@
 import asyncio
 import os.path
+import sys
 
 import click
 from loguru import logger
@@ -11,11 +12,17 @@ from utils.pem import RSAPrivateKeyLoadError
 
 default_config = Config()
 
+import handlers
 
 @click.command()
 @click.option("-c", "--config", "config_path", type=str, default="config.json", help="Configuration file path.")
+@click.option("-d", "--debug", default=False, type=bool, help="Debug mode.", is_flag=True)
 @logger.catch()
-def main(config_path: str):
+def main(config_path: str, debug: bool):
+    if debug:
+        logger.remove()
+        logger.add(sys.stdout, level="DEBUG")
+
     config = utils.config.create_if_not_exists(config_path, default_config)
 
     # if both public key and private key are not found,
@@ -64,7 +71,12 @@ def main(config_path: str):
         with open(config.public_key_path, "wb") as public_key_file:
             public_key_file.write(public_key_pem)
 
-    wss = monolibro.Proxy(config.host, config.port)
+    operation_handler = monolibro.OperationHandler()
+    handlers.register_operations(operation_handler)
+
+    wss = monolibro.Proxy(config.host, config.port, operation_handler)
+    handlers.register_intentions(wss)
+
     asyncio.run(wss.start())
 
 
