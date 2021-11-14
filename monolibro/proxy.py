@@ -41,7 +41,7 @@ class Proxy:
                 self.async_handlers[intention.value].append(func)
             else:
                 if intention.value not in self.handlers:
-                    self.async_handlers[intention.value] = []
+                    self.handlers[intention.value] = []
                 self.handlers[intention.value].append(func)
 
             return func
