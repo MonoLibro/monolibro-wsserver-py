@@ -5,14 +5,13 @@ import sys
 import click
 from loguru import logger
 
+import handlers
 import monolibro
 import utils
 from config import Config
 from utils.pem import RSAPrivateKeyLoadError
 
 default_config = Config()
-
-import handlers
 
 
 @click.command()
