@@ -7,12 +7,12 @@ def register(proxy):
     logger.info("Registering intentions")
 
     @proxy.handler(Intention.BROADCAST)
-    def broadcast(ws, proxy, payload, signature):
-        pass
+    async def broadcast(ws, proxy, payload, signature):
+        await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
     @proxy.handler(Intention.SPECIFIC)
-    def specific(ws, proxy, payload, signature):
-        pass
+    async def specific(ws, proxy, payload, signature):
+        await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
     @proxy.handler(Intention.SYSTEM)
     async def system(ws, proxy, payload, signature):
