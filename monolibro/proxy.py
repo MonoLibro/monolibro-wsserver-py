@@ -6,8 +6,8 @@ import websockets
 from loguru import logger
 
 import utils
-from . import AsyncEventHandler, EventHandler, Intention
-from .models import Message, User
+from monolibro import AsyncEventHandler, EventHandler, Intention
+from monolibro.models import Payload, User
 
 
 class Proxy:
@@ -53,8 +53,8 @@ class Proxy:
                     for msg_slice in raw_message_slices
                 ]
 
-                message = Message(json.loads(decoded_raw_message_slices[0]))
-                intention = message.details["intention"]
+                payload = Payload(json.loads(decoded_raw_message_slices[0]))
+                intention = payload.details["intention"]
                 if intention in self.handlers:
                     self.handlers[intention]()
                 if intention in self.async_handlers:

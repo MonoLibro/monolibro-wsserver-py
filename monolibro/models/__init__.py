@@ -1,2 +1,2 @@
-from .message import Message
+from .payload import Payload
 from .user import User

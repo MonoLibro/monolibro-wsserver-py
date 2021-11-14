@@ -1,4 +1,4 @@
-class Message:
+class Payload:
     version: int = None
     sessionID: str = None
     details: dict = None
