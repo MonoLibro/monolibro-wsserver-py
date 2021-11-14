@@ -18,7 +18,7 @@ class Proxy:
         self.ip = ip
         self.port = port
 
-        self.operation_handler = operation_handler;
+        self.operation_handler = operation_handler
 
         self.users: dict[str, User] = {}
 

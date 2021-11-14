@@ -13,7 +13,7 @@ class Table:
 
     def __getitem__(self, keys):
         try:
-            if (type(keys) == dict):
+            if type(keys) == dict:
                 conditions = []
                 for column in keys.keys():
                     value = keys[column]
@@ -27,7 +27,7 @@ class Table:
 
     def __delitem__(self, keys):
         try:
-            if (type(keys) == dict):
+            if type(keys) == dict:
                 conditions = []
                 for column in keys.keys():
                     value = keys[column]
