@@ -13,6 +13,7 @@ from utils.pem import RSAPrivateKeyLoadError
 
 default_config = Config()
 
+
 def generate_keys_if_not_exist(config):
     """ 
     ### This function generates the public and private key pair.
@@ -64,12 +65,13 @@ def generate_keys_if_not_exist(config):
         with open(config.public_key_path, "wb") as public_key_file:
             public_key_file.write(public_key_pem)
 
+
 @click.command()
 @click.option("-c", "--config", "config_path", type=str, default="config.json", help="Configuration file path.")
 @click.option("-d", "--debug", default=False, type=bool, help="Debug mode.", is_flag=True)
 @logger.catch()
 def main(config_path: str, debug: bool):
-    #Setting logger's logging level based on flags
+    # Setting logger's logging level based on flags
     if debug:
         logger.remove()
         logger.add(sys.stdout, level="DEBUG")
@@ -77,22 +79,21 @@ def main(config_path: str, debug: bool):
         logger.remove()
         logger.add(sys.stdout, level="INFO")
 
-
-    #Initializing configs
+    # Initializing configs
     config = utils.config.create_if_not_exists(config_path, default_config)
 
-    #Initializing key pairs
+    # Initializing key pairs
     generate_keys_if_not_exist(config)
 
-    #Initialize and register operation handlers
+    # Initialize and register operation handlers
     operation_handler = monolibro.OperationHandler()
     handlers.register_operations(operation_handler)
 
-    #Initialize and register proxy and intention handlers
+    # Initialize and register proxy and intention handlers
     wss = monolibro.Proxy(config.host, config.port, operation_handler)
     handlers.register_intentions(wss)
 
-    #Run proxy
+    # Run proxy
     asyncio.run(wss.start())
 
 

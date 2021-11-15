@@ -1,7 +1,7 @@
 from loguru import logger
 
-from monolibro.models.user import User
 from monolibro.models import Operation
+from monolibro.models.user import User
 
 
 def register(handler):
@@ -21,8 +21,8 @@ def register(handler):
             proxy.users[user_id].clients.append(ws)
             logger.info(f"A client of {user_id} has joined the network.")
         else:
-            logger.warning(f"A client of {user_id} trys to join the network while already being in the network. Ignoring.")
+            logger.warning(f"A client of {user_id} trys to join the network while already being in the network. "
+                           f"Ignoring.")
         logger.debug(f"The id of the ws object is {id(ws)}")
-
 
     logger.info("Operations registered")

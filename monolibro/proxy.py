@@ -3,6 +3,7 @@ import json
 from typing import Union
 
 import websockets
+import websockets.exceptions
 from loguru import logger
 from pydantic import ValidationError
 
@@ -57,11 +58,14 @@ class Proxy:
                 try:
                     raw_message = await ws.recv()
                 except websockets.exceptions.ConnectionClosedOK:
-                    logger.debug(f"A client has disconnected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
+                    logger.debug(
+                        f"A client has disconnected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
                     self.remove_from_user(ws)
                     return
                 except websockets.exceptions.ConnectionClosedError as e:
-                    logger.warning(f"A client (#{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}) has disconnected with error: {e}")
+                    logger.warning(
+                        f"A client (#{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}) has disconnected "
+                        f"with error: {e}")
                     logger.debug(f"Trying to remove {id(ws)} from user lists")
                     self.remove_from_user(ws)
                     return
