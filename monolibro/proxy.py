@@ -10,7 +10,8 @@ from pydantic import ValidationError
 import utils
 from .message_handler import AsyncMessageHandler, MessageHandler
 from .models import Intention, Operation
-from .models import Payload, User
+from .models import Payload
+from .proxy_state import ProxyState
 
 
 class Proxy:
@@ -18,13 +19,13 @@ class Proxy:
         self.ip = ip
         self.port = port
 
-        self.users: dict[str, User] = {}
+        self.state = ProxyState()
 
         self.async_handlers: dict[(Intention, Operation), list[AsyncMessageHandler]] = {}
         self.handlers: dict[(Intention, Operation), list[MessageHandler]] = {}
 
     def remove_from_user(self, ws):
-        for (user_id, user) in self.users.items():
+        for (user_id, user) in self.state.users.items():
             user_clients = user.clients
             if ws in user_clients:
                 del user_clients[user_clients.index(ws)]
@@ -94,12 +95,13 @@ class Proxy:
                     logger.debug(f"#{id(ws)}: Handling intention | {payload.sessionID}")
                     for handler in self.handlers[handler_key]:
                         logger.debug(f"#{id(ws)}: Calling intention handler#{id(handler)} | {payload.sessionID}")
-                        handler(ws, self, payload, signature)
+                        handler(ws, self.state, payload, signature)
                 if handler_key in self.async_handlers:
                     logger.debug(f"#{id(ws)}: Handling async intention | {payload.sessionID}")
                     for async_handler in self.async_handlers[handler_key]:
-                        logger.debug(f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
-                        await async_handler(ws, self, payload, signature)
+                        logger.debug(
+                            f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
+                        await async_handler(ws, self.state, payload, signature)
 
         return internal_handler
 

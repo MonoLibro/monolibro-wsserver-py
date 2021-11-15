@@ -15,7 +15,7 @@ def register_to_proxy(proxy):
     #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
-    async def system(ws, proxy, payload, signature):
+    async def system(ws, state, payload, signature):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
 
         data = payload.data
@@ -24,10 +24,10 @@ def register_to_proxy(proxy):
             await ws.close()
             return
         user_id = data["userID"]
-        if user_id not in proxy.users:
-            proxy.users[user_id] = User(id=user_id)
-        if ws not in proxy.users[user_id].clients:
-            proxy.users[user_id].clients.append(ws)
+        if user_id not in state.users:
+            state.users[user_id] = User(id=user_id)
+        if ws not in state.users[user_id].clients:
+            state.users[user_id].clients.append(ws)
             logger.info(f"A client of {user_id} has joined the network.")
         else:
             logger.warning(f"A client of {user_id} trys to join the network while already being in the network. "
