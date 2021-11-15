@@ -1,6 +1,8 @@
 from loguru import logger
+from websockets.legacy.server import WebSocketServerProtocol
 
-from monolibro.models import Intention, Operation, User
+from monolibro import ProxyState
+from monolibro.models import Intention, Operation, User, Payload
 
 
 def register_to_proxy(proxy):
@@ -15,7 +17,7 @@ def register_to_proxy(proxy):
     #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
-    async def system(ws, state, payload, signature):
+    async def system(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
 
         data = payload.data

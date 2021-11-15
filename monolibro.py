@@ -5,7 +5,7 @@ import sys
 import click
 from loguru import logger
 
-import handlers
+import message_handlers
 import monolibro
 import utils
 from config import Config
@@ -42,11 +42,13 @@ def main(config_path: str, debug: bool):
     except RSAPrivateKeyLoadError as e:
         logger.critical("Failed to load existing private key")
 
-    # create proxy and register intention handlers
+    # create proxy instance
     logger.info("Creating proxy instance")
     proxy = monolibro.Proxy(config.host, config.port)
+
+    # register message handlers
     logger.info("Registering intention handlers")
-    handlers.register_to_proxy(proxy)
+    message_handlers.register_to_proxy(proxy)
 
     # start proxy
     logger.info("Starting proxy")
