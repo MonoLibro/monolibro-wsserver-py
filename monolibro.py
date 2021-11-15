@@ -14,7 +14,7 @@ from utils.pem import RSAPrivateKeyLoadError
 default_config = Config()
 
 
-def generate_keys_if_not_exist(config):
+def generate_key_pair_if_not_exists(config: Config):
     """ 
     Generate RSA key pair if it does not exist.
     
