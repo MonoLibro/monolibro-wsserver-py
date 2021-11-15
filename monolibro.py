@@ -79,16 +79,12 @@ def main(config_path: str, debug: bool):
     # generate key pair
     generate_key_pair_if_not_exists(config)
 
-    # register operation handlers
-    operation_handler = monolibro.OperationHandler()
-    handlers.register_operations(operation_handler)
-
     # create proxy and register intention handlers
-    wss = monolibro.Proxy(config.host, config.port, operation_handler)
-    handlers.register_intentions(wss)
+    proxy = monolibro.Proxy(config.host, config.port)
+    handlers.register_to_proxy(proxy)
 
     # start proxy
-    asyncio.run(wss.start())
+    asyncio.run(proxy.start())
 
 
 if __name__ == "__main__":

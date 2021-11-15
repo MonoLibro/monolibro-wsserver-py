@@ -8,44 +8,42 @@ from loguru import logger
 from pydantic import ValidationError
 
 import utils
-from . import OperationHandler
 from .message_handler import AsyncMessageHandler, MessageHandler
-from .models import Intention
+from .models import Intention, Operation
 from .models import Payload, User
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int, operation_handler: OperationHandler) -> None:
+    def __init__(self, ip: str, port: int) -> None:
         self.ip = ip
         self.port = port
 
-        self.operation_handler = operation_handler
-
         self.users: dict[str, User] = {}
 
-        self.async_handlers: dict[Intention, list[AsyncMessageHandler]] = {}
-        self.handlers: dict[Intention, list[MessageHandler]] = {}
+        self.async_handlers: dict[(Intention, Operation), list[AsyncMessageHandler]] = {}
+        self.handlers: dict[(Intention, Operation), list[MessageHandler]] = {}
 
     def remove_from_user(self, ws):
-        for user in self.users.keys():
-            if ws in self.users[user].clients:
-                index = self.users[user].clients.index(ws)
-                del self.users[user].clients[index]
-                logger.info(f"A client of {user} has left the network.")
-                if not self.users[user].clients:
-                    del self.users[user]
+        for (user_id, user) in self.users.items():
+            user_clients = user.clients
+            if ws in user_clients:
+                del user_clients[user_clients.index(ws)]
+                if not user_clients:
+                    del user
                 return
 
-    def handler(self, intention: Intention):
+    def handler(self, intention: Intention, operation: Operation):
         def wrapper(func: Union[MessageHandler, AsyncMessageHandler]):
+            handler_key = (intention, operation)
+
             if asyncio.iscoroutinefunction(func):
-                if intention.value not in self.async_handlers:
-                    self.async_handlers[intention.value] = []
-                self.async_handlers[intention.value].append(func)
+                if handler_key not in self.async_handlers:
+                    self.async_handlers[handler_key] = []
+                self.async_handlers[handler_key].append(func)
             else:
-                if intention.value not in self.handlers:
-                    self.handlers[intention.value] = []
-                self.handlers[intention.value].append(func)
+                if handler_key not in self.handlers:
+                    self.handlers[handler_key] = []
+                self.handlers[handler_key].append(func)
 
             return func
 
@@ -53,26 +51,26 @@ class Proxy:
 
     def _get_internal_handlers(self):
         async def internal_handler(ws, path):
-            logger.debug(f"A client has connected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
+            logger.debug(f"#{id(ws)}: New connection from {ws.remote_address[0]}:{ws.remote_address[1]}")
             while True:
                 try:
                     raw_message = await ws.recv()
                 except websockets.exceptions.ConnectionClosedOK:
-                    logger.debug(
-                        f"A client has disconnected: #{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}")
+                    logger.info(f"#{id(ws)}: Connection closed")
+                    logger.debug(f"#{id(ws)}: Cleaning up connection")
                     self.remove_from_user(ws)
                     return
                 except websockets.exceptions.ConnectionClosedError as e:
-                    logger.warning(
-                        f"A client (#{id(ws)} from {ws.remote_address[0]}:{ws.remote_address[1]}) has disconnected "
-                        f"with error: {e}")
-                    logger.debug(f"Trying to remove {id(ws)} from user lists")
+                    logger.info(f"#{id(ws)}: Connection closed unexpectedly: {e}")
+                    logger.debug(f"#{id(ws)}: Cleaning up connection")
                     self.remove_from_user(ws)
                     return
 
+                logger.debug(f"#{id(ws)}: Parsing message")
+
                 raw_message_slices = raw_message.split(".")
                 if len(raw_message_slices) != 2:
-                    logger.info(f"Malformed message recieved: {raw_message}")
+                    logger.info(f"#{id(ws)}: Malformed message received: {raw_message}")
                     return
 
                 decoded_raw_message_slices = [
@@ -81,30 +79,31 @@ class Proxy:
                 ]
 
                 try:
-                    logger.debug(f"Parsing Message: {decoded_raw_message_slices[0]}")
-
+                    logger.debug(f"#{id(ws)}: Parsing payload")
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
-
-                    signature = decoded_raw_message_slices[1]
-
-                    intention = payload.details.intention.value
-                    if intention in self.handlers:
-                        logger.debug(f"Handling intention | {payload.sessionID}")
-                        for handler in self.handlers[intention]:
-                            logger.debug(f"Calling intention handler#{id(handler)} | {payload.sessionID}")
-                            handler(ws, self, payload, signature)
-                    if intention in self.async_handlers:
-                        logger.debug(f"Handling async intention | {payload.sessionID}")
-                        for async_handler in self.async_handlers[intention]:
-                            logger.debug(f"Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
-                            await async_handler(ws, self, payload, signature)
                 except ValidationError as e:
-                    logger.debug(f"Velidation Error: {e.json()}")
+                    logger.debug(f"#{id(ws)}: Payload validation error: {e.json()}")
                     return
+
+                signature = decoded_raw_message_slices[1]
+
+                intention = payload.details.intention
+                operation = payload.operation
+                handler_key = (intention, operation)
+                if handler_key in self.handlers:
+                    logger.debug(f"#{id(ws)}: Handling intention | {payload.sessionID}")
+                    for handler in self.handlers[handler_key]:
+                        logger.debug(f"#{id(ws)}: Calling intention handler#{id(handler)} | {payload.sessionID}")
+                        handler(ws, self, payload, signature)
+                if handler_key in self.async_handlers:
+                    logger.debug(f"#{id(ws)}: Handling async intention | {payload.sessionID}")
+                    for async_handler in self.async_handlers[handler_key]:
+                        logger.debug(f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
+                        await async_handler(ws, self, payload, signature)
 
         return internal_handler
 
     async def start(self) -> None:
-        logger.info(f"Listening on ws://{self.ip}:{self.port}")
+        logger.info(f"Proxy listening on ws://{self.ip}:{self.port}")
         async with websockets.serve(self._get_internal_handlers(), self.ip, self.port):
             await asyncio.Future()

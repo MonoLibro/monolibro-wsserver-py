@@ -1,14 +1,23 @@
 from loguru import logger
 
-from monolibro.models import Operation
-from monolibro.models.user import User
+from monolibro.models import Intention, Operation, User
 
 
-def register(handler):
-    logger.info("Registering operations")
+def register_to_proxy(proxy):
+    logger.info("Registering handlers")
 
-    @handler.handler(Operation.JOIN_NETWORK)
-    async def join_network(ws, proxy, payload, signature):
+    # @proxy.handler(Intention.BROADCAST)
+    # async def broadcast(ws, proxy, payload, signature):
+    #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
+    #
+    # @proxy.handler(Intention.SPECIFIC)
+    # async def specific(ws, proxy, payload, signature):
+    #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
+
+    @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
+    async def system(ws, proxy, payload, signature):
+        logger.debug(f"Handling Intention: System | {payload.sessionID}")
+
         data = payload.data
         if "userID" not in data:
             logger.info("A client trys to join the network but rejected: Insufficient payload data")
@@ -25,4 +34,4 @@ def register(handler):
                            f"Ignoring.")
         logger.debug(f"The id of the ws object is {id(ws)}")
 
-    logger.info("Operations registered")
+    logger.info("Handlers registered")
