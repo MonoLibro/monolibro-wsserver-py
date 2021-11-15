@@ -16,16 +16,14 @@ default_config = Config()
 
 def generate_keys_if_not_exist(config):
     """ 
-    ### This function generates the public and private key pair.
+    Generate RSA key pair if it does not exist.
     
-    if both public key and private key are not found,
-    generate new key pair and write directly
+    If both public key and private key are not found, generate new key pair and write directly.
     
-    if private key is found but public key is not found,
-    get public key from private and write directly
+    If private key is found but public key is not found, get public key from private key and write directly.
     
-    if private key is not found but public key is found,
-    ask if user want to generate a new key pair and overwrite existing public key
+    If private key is not found but public key is found,
+    ask if the user wants to generate a new key pair and overwrite existing public key.
     """
     if not os.path.isfile(config.private_key_path):
         public_key_exists = os.path.isfile(config.public_key_path)
@@ -71,29 +69,25 @@ def generate_keys_if_not_exist(config):
 @click.option("-d", "--debug", default=False, type=bool, help="Debug mode.", is_flag=True)
 @logger.catch()
 def main(config_path: str, debug: bool):
-    # Setting logger's logging level based on flags
-    if debug:
-        logger.remove()
-        logger.add(sys.stdout, level="DEBUG")
-    else:
-        logger.remove()
-        logger.add(sys.stdout, level="INFO")
+    # setup logger
+    logger.remove()
+    logger.add(sys.stdout, level="DEBUG" if debug else "INFO")
 
-    # Initializing configs
+    # create config
     config = utils.config.create_if_not_exists(config_path, default_config)
 
-    # Initializing key pairs
-    generate_keys_if_not_exist(config)
+    # generate key pair
+    generate_key_pair_if_not_exists(config)
 
-    # Initialize and register operation handlers
+    # register operation handlers
     operation_handler = monolibro.OperationHandler()
     handlers.register_operations(operation_handler)
 
-    # Initialize and register proxy and intention handlers
+    # create proxy and register intention handlers
     wss = monolibro.Proxy(config.host, config.port, operation_handler)
     handlers.register_intentions(wss)
 
-    # Run proxy
+    # start proxy
     asyncio.run(wss.start())
 
 
