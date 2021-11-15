@@ -1,4 +1,5 @@
 import asyncio
+import os.path
 import sys
 
 import click
@@ -8,6 +9,7 @@ import handlers
 import monolibro
 import utils
 from config import Config
+from utils.pem import RSAPrivateKeyLoadError
 
 default_config = Config()
 
@@ -22,20 +24,37 @@ def main(config_path: str, debug: bool):
     logger.add(sys.stdout, level="DEBUG" if debug else "INFO")
 
     # create config
-    config = utils.config.create_if_not_exists(config_path, default_config)
+    logger.info("Checking configuration file . . .")
+    config, config_created = utils.config.create_if_not_exists(config_path, default_config)
+    if config_created:
+        logger.info(f"Configuration file ({os.path.abspath(config_path)}) created")
+    else:
+        logger.info("Configuration file already exists, creation skipped")
 
     # generate key pair
-    utils.rsa.generate_key_pair_pem_if_not_exists(config.public_key_path, config.private_key_path)
+    logger.info("Checking public and private key pair PEM files . . .")
+    try:
+        pem_created = utils.rsa.generate_key_pair_pem_if_not_exists(config.public_key_path, config.private_key_path)
+        if pem_created:
+            logger.info("Public and private key pair PEM files generated")
+        else:
+            logger.info("Public and private key pair PEM files already exist, generation skipped")
+    except RSAPrivateKeyLoadError as e:
+        logger.critical("Failed to load existing private key")
 
     # register operation handlers
+    logger.info("Registering operation handlers")
     operation_handler = monolibro.OperationHandler()
     handlers.register_operations(operation_handler)
 
     # create proxy and register intention handlers
+    logger.info("Creating proxy instance")
     wss = monolibro.Proxy(config.host, config.port, operation_handler)
+    logger.info("Registering intention handlers")
     handlers.register_intentions(wss)
 
     # start proxy
+    logger.info("Starting proxy")
     asyncio.run(wss.start())
 
 

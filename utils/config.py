@@ -14,9 +14,9 @@ def load(path: str) -> Config:
         return Config(**json.load(file))
 
 
-def create_if_not_exists(path: str, default: Config) -> Config:
+def create_if_not_exists(path: str, default: Config) -> (Config, bool):
     if os.path.isfile(path):
-        return load(path)
+        return load(path), False
     else:
         create(path, default)
-        return default
+        return default, True
