@@ -42,20 +42,15 @@ def main(config_path: str, debug: bool):
     except RSAPrivateKeyLoadError as e:
         logger.critical("Failed to load existing private key")
 
-    # register operation handlers
-    logger.info("Registering operation handlers")
-    operation_handler = monolibro.OperationHandler()
-    handlers.register_operations(operation_handler)
-
     # create proxy and register intention handlers
     logger.info("Creating proxy instance")
-    wss = monolibro.Proxy(config.host, config.port, operation_handler)
+    proxy = monolibro.Proxy(config.host, config.port)
     logger.info("Registering intention handlers")
-    handlers.register_intentions(wss)
+    handlers.register_to_proxy(proxy)
 
     # start proxy
     logger.info("Starting proxy")
-    asyncio.run(wss.start())
+    asyncio.run(proxy.start())
 
 
 if __name__ == "__main__":
