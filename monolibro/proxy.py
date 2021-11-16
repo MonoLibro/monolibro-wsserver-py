@@ -95,13 +95,13 @@ class Proxy:
                     logger.debug(f"#{id(ws)}: Handling intention | {payload.sessionID}")
                     for handler in self.handlers[handler_key]:
                         logger.debug(f"#{id(ws)}: Calling intention handler#{id(handler)} | {payload.sessionID}")
-                        handler(ws, self.state, payload, signature)
+                        handler(ws, self.state, payload, signature, raw_message)
                 if handler_key in self.async_handlers:
                     logger.debug(f"#{id(ws)}: Handling async intention | {payload.sessionID}")
                     for async_handler in self.async_handlers[handler_key]:
                         logger.debug(
                             f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
-                        await async_handler(ws, self.state, payload, signature)
+                        await async_handler(ws, self.state, payload, signature, raw_message)
 
         return internal_handler
 
