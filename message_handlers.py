@@ -16,6 +16,19 @@ def register_to_proxy(proxy):
     # async def specific(ws, proxy, payload, signature):
     #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
+    @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCUONT_INIT)
+    @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
+    @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
+    @proxy.handler(Intention.BROADCAST, Operation.JOIN_ACTIVITY)
+    async def on_general_broadcast_fowarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
+        logger.debug(f"Broadcasting message | {payload.sessionID}")
+        users = state.users
+        for user in users:
+            clients = users[user].clients
+            for client in clients:
+                await client.send(raw_message)
+
+
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
     async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
