@@ -17,7 +17,7 @@ def register_to_proxy(proxy):
     #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
 
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
-    async def system(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes):
+    async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
 
         data = payload.data
