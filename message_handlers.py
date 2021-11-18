@@ -1,8 +1,11 @@
+import asyncio
+
 from loguru import logger
 from websockets.legacy.server import WebSocketServerProtocol
 from cryptography.hazmat.primitives import hashes
 
 from monolibro import ProxyState
+from database import database
 from monolibro import VotingSession
 from monolibro.models import Intention, Operation, User, Payload
 
@@ -66,6 +69,14 @@ def register_to_proxy(proxy):
             return
 
         voting_session = state.votes[voting_session_id]
+
+        logger.debug(f"Announcing vote | {payload.sessionID}")
+
+        for user_id in voting_session.voting_context["users"].keys():
+            user = voting_session.voting_context["users"][user_id]
+            for connection in user.clients:
+                await connection.send(raw_message)
+
         voting_session.vote(user_id, voting_value)
 
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCUONT_INIT)
@@ -75,20 +86,27 @@ def register_to_proxy(proxy):
             if field not in payload.data:
                 logger.warning("A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
                 return
-
-        def fail_callback(session: VotingSession):
-            pass
-        def success_callback(session: VotingSession):
-            pass
-        def vote_callback(session: VotingSession):
-            pass
-        
-
         voting_id = payload.data["userID"] + payload.data["timestamp"]
         digest = hashes.Hash(hashes.SHA256())
         digest.update(voting_id.encode())
-        # hashed_voting_id = digest.finalize().hex().upper()
-        hashed_voting_id = "a"
+        hashed_voting_id = digest.finalize().hex().upper()
+
+        def fail_callback(session: VotingSession):
+            del state.votes[hashed_voting_id]
+            pass
+        def success_callback(session: VotingSession):
+            del state.votes[hashed_voting_id]
+            database["Users"].insert([
+                payload.data["userID"],
+                payload.data["firstName"],
+                payload.data["lastName"],
+                payload.data["email"],
+                payload.data["publicKey"],
+            ])
+            database.commit()
+        def vote_callback(session: VotingSession):
+            pass
+
         voting_session = VotingSession(hashed_voting_id, {"users":state.users},timeout=10 , fail_callback=fail_callback, vote_callback=vote_callback, success_callback=success_callback)
         state.votes[hashed_voting_id] = voting_session
         voting_session.start_voting()
