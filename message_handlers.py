@@ -94,6 +94,7 @@ def register_to_proxy(proxy):
                 payload.data["lastName"],
                 payload.data["email"],
                 payload.data["publicKey"],
+                0,
             ])
             database.commit()
         def vote_callback(session: VotingSession):

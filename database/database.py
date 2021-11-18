@@ -13,7 +13,8 @@ class Database:
                 ["firstName", "char(256)", "NOT NULL"],
                 ["lastName", "char(256)", "NOT NULL"],
                 ["email", "char(256)", "NOT NULL"],
-                ["publicKey", "text", "NOT NULL"]
+                ["publicKey", "text", "NOT NULL"],
+                ["frozen", "int(1)", "NOT NULL"],
             ]
         }
 
