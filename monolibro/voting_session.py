@@ -3,7 +3,6 @@ from typing import Callable, Dict
 
 
 class VotingSession:
-    voting_control: any
     voting_id: str
     voting_context: Dict[str, any]
     results: Dict[str, bool]
@@ -14,7 +13,6 @@ class VotingSession:
     status: int
     def __init__(
         self,
-        voting_control: any,
         voting_id: str, # Key for quering the voting session
         voting_context: Dict[str, any], # Participation
         timeout: int = 10, # Timeout in sec
@@ -27,7 +25,6 @@ class VotingSession:
             # Exception to be converted to custom exception
             raise Exception("Insufficient members in voting context")
 
-        self.voting_control = voting_control
         self.voting_id = voting_id
         self.results = {}
         self.timeout = timeout
