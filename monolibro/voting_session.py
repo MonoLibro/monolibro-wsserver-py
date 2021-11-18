@@ -43,8 +43,6 @@ class VotingSession:
     
     def is_user_in_context(self, user_id: str) -> bool:
         users = self.voting_context["users"]
-        if self.vote_callback:
-            self.vote_callback()
         return user_id in users
 
     def vote(self, user_id: str, vote: bool) -> None:
@@ -59,9 +57,10 @@ class VotingSession:
             self.results[user_id] = vote
         
         if self.has_vote_passed():
-            self.success_callback()
-
-        self.vote_callback()
+            self.success_callback(self)
+            self.status = 2
+        else:
+            self.vote_callback(self)
 
     def has_vote_passed(self) -> bool:
         return self.get_assent_votes >= int((self.get_total_user_count + 1) / 2)
@@ -79,8 +78,9 @@ class VotingSession:
     async def wait_for_votes(self):
         self.status = 1
         await asyncio.sleep(self.timeout)
-        self.status = 2
-        self.timeout_callback()
+        if self.status == 1:
+            self.timeout_callback(self)
+            self.status = 2
 
     async def start_voting(self):
         await asyncio.create_task(self.wait_for_votes())
