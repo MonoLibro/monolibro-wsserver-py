@@ -13,14 +13,6 @@ from monolibro.models import Intention, Operation, User, Payload
 def register_to_proxy(proxy):
     logger.info("Registering handlers")
 
-    # @proxy.handler(Intention.BROADCAST)
-    # async def broadcast(ws, proxy, payload, signature):
-    #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
-    #
-    # @proxy.handler(Intention.SPECIFIC)
-    # async def specific(ws, proxy, payload, signature):
-    #     await proxy.operation_handler.handle(ws, proxy, payload, signature)
-
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
     @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
     @proxy.handler(Intention.BROADCAST, Operation.JOIN_ACTIVITY)
