@@ -58,10 +58,13 @@ class VotingSession:
         else:
             self.results[user_id] = vote
         
-        if self.get_assent_votes >= int((self.get_total_user_count + 1) / 2):
+        if self.has_vote_passed():
             self.success_callback()
 
         self.vote_callback()
+
+    def has_vote_passed(self) -> bool:
+        return self.get_assent_votes >= int((self.get_total_user_count + 1) / 2)
 
     def get_voted_user_count(self) -> int:
         return len(self.results)
