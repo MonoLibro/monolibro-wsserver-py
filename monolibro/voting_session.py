@@ -1,6 +1,8 @@
 import asyncio
 from typing import Callable, Dict
 
+from loguru import logger
+
 
 class VotingSession:
     voting_id: str
@@ -56,11 +58,13 @@ class VotingSession:
         else:
             self.results[user_id] = vote
         
+        logger.debug(f"Voting Session {self.voting_id} has someone voted")
+        self.vote_callback(self)
+        
         if self.has_vote_passed():
+            logger.debug(f"Voting Session {self.voting_id} has successfuly passed")
             self.success_callback(self)
             self.status = 2
-        else:
-            self.vote_callback(self)
 
     def has_vote_passed(self) -> bool:
         return self.get_assent_votes() >= int((self.get_total_user_count() + 1) / 2)
@@ -79,6 +83,7 @@ class VotingSession:
         self.status = 1
         await asyncio.sleep(self.timeout)
         if self.status == 1:
+            logger.debug(f"Voting Session {self.voting_id} has timed-out")
             if self.has_vote_passed():
                 self.success_callback(self)
             else:
@@ -86,4 +91,5 @@ class VotingSession:
             self.status = 2
 
     def start_voting(self):
+        logger.debug(f"Voting session {self.voting_id} has started with a timeout of {self.timeout}")
         asyncio.create_task(self.wait_for_votes())
