@@ -72,7 +72,7 @@ class Proxy:
                 raw_message_slices = raw_message.split(".")
                 if len(raw_message_slices) != 2:
                     logger.info(f"#{id(ws)}: Malformed message received: {raw_message}")
-                    return
+                    continue
 
                 decoded_raw_message_slices = [
                     utils.base64.decode_url_no_padding(msg_slice)
@@ -84,7 +84,10 @@ class Proxy:
                     payload = Payload(**json.loads(decoded_raw_message_slices[0]))
                 except ValidationError as e:
                     logger.debug(f"#{id(ws)}: Payload validation error: {e.json()}")
-                    return
+                    continue
+                except json.decoder.JSONDecodeError as e:
+                    logger.debug(f"#{id(ws)}: Payload validation error (invalid josn format): {e}")
+                    continue
 
                 signature = decoded_raw_message_slices[1]
 
