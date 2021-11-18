@@ -11,6 +11,9 @@ class Table:
                 keys.append(field[0])
         return keys
 
+    def get_field_names(self):
+        return [i[0] for i in self.schema]
+
     def __getitem__(self, keys):
         try:
             if type(keys) == dict:
@@ -43,3 +46,23 @@ class Table:
         values = [f"'{i}'" for i in values]
         values_str = ", ".join(values)
         self.db.execute(f"insert into {self.table_name} values ({values_str})")
+
+    def __setitem__(self, keys, values):
+        results = []
+        for i in range(len(values)):
+            value = values[i]
+            field = self.get_field_names()[i]
+            results.append(f"{field} = '{value}'")
+        values_str = ", ".join(results)
+        try:
+            if type(keys) == dict:
+                conditions = []
+                for column in keys.keys():
+                    value = keys[column]
+                    conditions.append(f"{column} = '{value}'")
+                return self.db.execute(f"update {self.table_name} set {values_str} where {' and '.join(conditions)} ;")
+            else:
+                primary_key = self.get_primary_key()[0]
+                return self.db.execute(f'delete from {self.table_name} where {primary_key} = "{keys}"')
+        except Exception:
+            pass
