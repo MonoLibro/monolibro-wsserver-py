@@ -24,7 +24,8 @@ class Table:
                 return self.db.execute(f"select * from {self.table_name} where {' and '.join(conditions)};")
             else:
                 primary_key = self.get_primary_key()[0]
-                return self.db.execute(f'select * from {self.table_name} where {primary_key} = "{keys}"')
+                result = self.db.execute(f'select * from {self.table_name} where {primary_key} = "{keys}"')
+                return [list(i) for i in result]
         except Exception:
             return []
 
@@ -63,6 +64,6 @@ class Table:
                 return self.db.execute(f"update {self.table_name} set {values_str} where {' and '.join(conditions)} ;")
             else:
                 primary_key = self.get_primary_key()[0]
-                return self.db.execute(f'delete from {self.table_name} where {primary_key} = "{keys}"')
+                return self.db.execute(f'update {self.table_name} set {values_str} where {primary_key} = "{keys}"')
         except Exception:
             pass
