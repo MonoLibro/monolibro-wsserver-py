@@ -16,6 +16,12 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
     @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
     @proxy.handler(Intention.BROADCAST, Operation.JOIN_ACTIVITY)
+    @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACTIVITY)
+    @proxy.handler(Intention.BROADCAST, Operation.SIGN_ACTIVITY)
+    @proxy.handler(Intention.BROADCAST, Operation.LEAVE_ACTIVITY)
+    @proxy.handler(Intention.BROADCAST, Operation.COMMIT_ACTIVITY)
+    @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_INIT)
+    @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_CONFIRM)
     async def on_general_broadcast_fowarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
         logger.debug(f"Broadcasting message | {payload.sessionID}")
         users = state.users
