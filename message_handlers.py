@@ -71,6 +71,19 @@ def register_to_proxy(proxy):
 
         voting_session.vote(user_id, voting_value)
 
+    @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
+    async def on_broadcast_freeze_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
+        compulsory_fields=["userID"]
+        for field in compulsory_fields:
+            if field not in payload.data:
+                logger.warning("A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
+                return
+        user_id = payload.data["userID"]
+        user_record = database["Users"][user_id][0]
+        user_record[5] = 1
+        user_record = database["Users"][user_id] = user_record
+        database.commit()
+
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCUONT_INIT)
     async def on_broadcast_create_account_init(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
         compulsory_fields=["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
