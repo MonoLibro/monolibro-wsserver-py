@@ -63,7 +63,7 @@ class VotingSession:
             self.vote_callback(self)
 
     def has_vote_passed(self) -> bool:
-        return self.get_assent_votes >= int((self.get_total_user_count + 1) / 2)
+        return self.get_assent_votes() >= int((self.get_total_user_count() + 1) / 2)
 
     def get_voted_user_count(self) -> int:
         return len(self.results)
@@ -85,5 +85,5 @@ class VotingSession:
                 self.fail_callback(self)
             self.status = 2
 
-    async def start_voting(self):
-        await asyncio.create_task(self.wait_for_votes())
+    def start_voting(self):
+        asyncio.create_task(self.wait_for_votes())
