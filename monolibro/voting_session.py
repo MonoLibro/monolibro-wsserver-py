@@ -8,7 +8,7 @@ class VotingSession:
     results: Dict[str, bool]
     timeout: int
     success_callback: Callable[[], None]
-    timeout_callback: Callable[[], None]
+    fail_callback: Callable[[], None]
     vote_callback: Callable[[], None]
     status: int
     def __init__(
@@ -17,7 +17,7 @@ class VotingSession:
         voting_context: Dict[str, any], # Participation
         timeout: int = 10, # Timeout in sec
         success_callback: Callable[[], None] = None, # Callback function when voting has done
-        timeout_callback: Callable[[], None] = None, # Callback function when voting has timeouted
+        fail_callback: Callable[[], None] = None, # Callback function when voting has timeouted
         vote_callback: Callable[[], None] = None # Callback function when voting has timeouted
     ):
 
@@ -29,7 +29,7 @@ class VotingSession:
         self.results = {}
         self.timeout = timeout
         self.success_callback = success_callback
-        self.timeout_callback = timeout_callback
+        self.fail_callback = fail_callback
         self.vote_callback = vote_callback
 
         # To be converted to data class
@@ -79,7 +79,10 @@ class VotingSession:
         self.status = 1
         await asyncio.sleep(self.timeout)
         if self.status == 1:
-            self.timeout_callback(self)
+            if self.has_vote_passed():
+                self.success_callback(self)
+            else:
+                self.fail_callback(self)
             self.status = 2
 
     async def start_voting(self):
