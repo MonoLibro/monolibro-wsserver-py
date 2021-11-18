@@ -12,6 +12,7 @@ class Database:
                 ["userID", "char(32)", "PRIMARY KEY", "NOT NULL"],
                 ["firstName", "char(256)", "NOT NULL"],
                 ["lastName", "char(256)", "NOT NULL"],
+                ["email", "char(256)", "NOT NULL"],
                 ["publicKey", "text", "NOT NULL"]
             ]
         }
@@ -49,7 +50,6 @@ class Database:
         for table in self.schemas.keys():
             fields = self.schemas[table]
             self.execute_only(f"create table {table} ({','.join([' '.join(i) for i in fields])})")
-            print(f"create table {table} ({','.join([' '.join(i) for i in fields])})")
 
     def commit(self):
         self.db.commit()
