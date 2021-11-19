@@ -144,3 +144,4 @@ cython_debug/
 keys/
 logs/
 config.json
+*.sql
