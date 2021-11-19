@@ -6,7 +6,7 @@ from config import Config
 
 def create(path: str, config_obj: Config) -> None:
     with open(path, "w") as file:
-        json.dump(config_obj.__dict__, file, indent=2)
+        json.dump(config_obj.dict(), file, indent=2)
 
 
 def load(path: str) -> Config:
