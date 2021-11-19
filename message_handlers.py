@@ -1,11 +1,9 @@
-import asyncio
-
+from cryptography.hazmat.primitives import hashes
 from loguru import logger
 from websockets.legacy.server import WebSocketServerProtocol
-from cryptography.hazmat.primitives import hashes
 
-from monolibro import ProxyState
 from database import database
+from monolibro import ProxyState
 from monolibro import VotingSession
 from monolibro.models import Intention, Operation, User, Payload
 
@@ -22,7 +20,8 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.BROADCAST, Operation.COMMIT_ACTIVITY)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_INIT)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_CONFIRM)
-    async def on_general_broadcast_fowarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
+    async def on_general_broadcast_fowarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+                                             signature: bytes, raw_message: str):
         logger.debug(f"Broadcasting message | {payload.sessionID}")
         users = state.users
         for user in users:
@@ -31,7 +30,8 @@ def register_to_proxy(proxy):
                 await client.send(raw_message)
 
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
-    async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
+    async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes,
+                                     raw_message: str):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
 
         data = payload.data
@@ -51,13 +51,14 @@ def register_to_proxy(proxy):
         logger.debug(f"The id of the ws object is {id(ws)}")
 
     @proxy.handler(Intention.BROADCAST, Operation.VOTE_SESSION_QUERY)
-    async def on_broadcast_vote_session_query(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
-        compulsory_fields=["userID", "votingSessionID", "votingValue"]
+    async def on_broadcast_vote_session_query(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+                                              signature: bytes, raw_message: str):
+        compulsory_fields = ["userID", "votingSessionID", "votingValue"]
         for field in compulsory_fields:
             if field not in payload.data:
                 logger.warning("A client trys to vote with invalid payload data. Ignoring | {payload.sessionID}")
                 return
-        
+
         user_id = payload.data["userID"]
         voting_session_id = payload.data["votingSessionID"]
         voting_value = payload.data["votingValue"]
@@ -78,13 +79,15 @@ def register_to_proxy(proxy):
         voting_session.vote(user_id, voting_value)
 
     @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
-    async def on_broadcast_update_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
-        compulsory_fields=["userID", "firstName", "lastName", "email"]
+    async def on_broadcast_update_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+                                          signature: bytes, raw_message: str):
+        compulsory_fields = ["userID", "firstName", "lastName", "email"]
         for field in compulsory_fields:
             if field not in payload.data:
-                logger.warning("A client trys to update an account with invalid payload data. Ignoring | {payload.sessionID}")
+                logger.warning(
+                    "A client trys to update an account with invalid payload data. Ignoring | {payload.sessionID}")
                 return
-        
+
         user_id = payload.data["userID"]
         first_name = payload.data["firstName"]
         last_name = payload.data["lastName"]
@@ -97,13 +100,15 @@ def register_to_proxy(proxy):
         user_record[3] = email
         user_record = database["Users"][user_id] = user_record
         database.commit()
-    
+
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
-    async def on_broadcast_freeze_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
-        compulsory_fields=["userID"]
+    async def on_broadcast_freeze_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+                                          signature: bytes, raw_message: str):
+        compulsory_fields = ["userID"]
         for field in compulsory_fields:
             if field not in payload.data:
-                logger.warning("A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
+                logger.warning(
+                    "A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
                 return
         user_id = payload.data["userID"]
         user_record = database["Users"][user_id][0]
@@ -112,11 +117,13 @@ def register_to_proxy(proxy):
         database.commit()
 
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCUONT_INIT)
-    async def on_broadcast_create_account_init(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes, raw_message: str):
-        compulsory_fields=["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
+    async def on_broadcast_create_account_init(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+                                               signature: bytes, raw_message: str):
+        compulsory_fields = ["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
         for field in compulsory_fields:
             if field not in payload.data:
-                logger.warning("A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
+                logger.warning(
+                    "A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
                 return
         voting_id = payload.data["userID"] + payload.data["timestamp"]
         digest = hashes.Hash(hashes.SHA256())
@@ -126,6 +133,7 @@ def register_to_proxy(proxy):
         def fail_callback(session: VotingSession):
             del state.votes[hashed_voting_id]
             pass
+
         def success_callback(session: VotingSession):
             del state.votes[hashed_voting_id]
             database["Users"].insert([
@@ -137,10 +145,13 @@ def register_to_proxy(proxy):
                 0,
             ])
             database.commit()
+
         def vote_callback(session: VotingSession):
             pass
 
-        voting_session = VotingSession(hashed_voting_id, {"users":state.users},timeout=10 , fail_callback=fail_callback, vote_callback=vote_callback, success_callback=success_callback)
+        voting_session = VotingSession(hashed_voting_id, {"users": state.users}, timeout=10,
+                                       fail_callback=fail_callback, vote_callback=vote_callback,
+                                       success_callback=success_callback)
         state.votes[hashed_voting_id] = voting_session
         voting_session.start_voting()
 

@@ -5,9 +5,9 @@ import sys
 import click
 from loguru import logger
 
+import database
 import message_handlers
 import monolibro
-import database
 import utils
 from config import Config
 from utils.pem import RSAPrivateKeyLoadError
@@ -16,16 +16,22 @@ default_config = Config()
 
 
 @click.command()
-@click.option("-c", "--config", "config_path", type=str, default="config.json", help="Configuration file path.")
-@click.option("-d", "--debug", default=False, type=bool, help="Debug mode.", is_flag=True)
-@click.option("-i", "--initalizeDatabase", "init_database", default=False, type=bool, help="Wipe and re-initialize database.", is_flag=True)
+@click.option("-c", "--config", "config_path",
+              type=str, default="config.json",
+              help="Configuration file path.")
+@click.option("-d", "--debug",
+              type=bool, default=False, is_flag=True,
+              help="Debug mode.")
+@click.option("-i", "--initalizeDatabase", "init_database",
+              type=bool, default=False, is_flag=True,
+              help="Wipe and re-initialize database.")
 @logger.catch()
 def main(config_path: str, debug: bool, init_database: bool):
     # initialize database
     if init_database:
         logger.info(f"Wiping and re-initializing database . . .")
         database.database.force_reset()
-    
+
     # setup logger
     logger.remove()
     logger.add(sys.stdout, level="DEBUG" if debug else "INFO")
