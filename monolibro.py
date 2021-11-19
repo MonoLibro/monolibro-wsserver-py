@@ -47,12 +47,16 @@ def main(config_path: str, debug: bool, init_database: bool):
     # generate key pair
     logger.info("Checking public and private key pair PEM files . . .")
     try:
-        pem_created = utils.rsa.generate_key_pair_pem_if_not_exists(config.public_key_path, config.private_key_path)
+        public_key, private_key, pem_created = utils.rsa.generate_key_pair_pem_if_not_exists(
+            config.public_key_path, config.private_key_path)
+        if not public_key and not private_key:
+            return
+
         if pem_created:
             logger.info("Public and private key pair PEM files generated")
         else:
             logger.info("Public and private key pair PEM files already exist, generation skipped")
-    except RSAPrivateKeyLoadError as e:
+    except RSAPrivateKeyLoadError:
         logger.critical("Failed to load existing private key")
 
     # create proxy instance
