@@ -1,5 +1,5 @@
 import os
-from types import Union
+from typing import Union
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPrivateKey
