@@ -8,6 +8,7 @@ from loguru import logger
 
 import utils
 from utils.message import DeserializePayloadError
+from . import Context
 from .message_handler import AsyncMessageHandler, MessageHandler
 from .models import Intention, Operation
 from .proxy_state import ProxyState
@@ -83,13 +84,13 @@ class Proxy:
                     logger.debug(f"#{id(ws)}: Handling intention | {payload.sessionID}")
                     for handler in self.handlers[handler_key]:
                         logger.debug(f"#{id(ws)}: Calling intention handler#{id(handler)} | {payload.sessionID}")
-                        handler(ws, self.state, payload, message)
+                        handler(Context(ws, self.state, payload))
                 if handler_key in self.async_handlers:
                     logger.debug(f"#{id(ws)}: Handling async intention | {payload.sessionID}")
                     for async_handler in self.async_handlers[handler_key]:
                         logger.debug(
                             f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
-                        await async_handler(ws, self.state, payload, message)
+                        await async_handler(Context(ws, self.state, payload))
 
         return internal_handler
 
