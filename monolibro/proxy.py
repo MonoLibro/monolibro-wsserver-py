@@ -8,7 +8,7 @@ from loguru import logger
 
 import utils
 from utils.message import DeserializePayloadError
-from . import Context
+from .context import Context
 from .message_handler import AsyncMessageHandler, MessageHandler
 from .models import Intention, Operation
 from .proxy_state import ProxyState

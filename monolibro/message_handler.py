@@ -1,6 +1,6 @@
 from typing import Callable, Awaitable
 
-from . import Context
+from .context import Context
 
 MessageHandler = Callable[[Context], None]
 AsyncMessageHandler = Callable[[Context], Awaitable]
