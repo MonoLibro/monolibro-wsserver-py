@@ -1,23 +1,25 @@
 import asyncio
-import json
 from typing import Union
 
 import websockets
 import websockets.exceptions
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPrivateKey
 from loguru import logger
-from pydantic import ValidationError
 
 import utils
+from utils.message import DeserializePayloadError
 from .message_handler import AsyncMessageHandler, MessageHandler
 from .models import Intention, Operation
-from .models import Payload
 from .proxy_state import ProxyState
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int) -> None:
+    def __init__(self, ip: str, port: int, public_key: RSAPublicKey, private_key: RSAPrivateKey) -> None:
         self.ip = ip
         self.port = port
+
+        self.public_key = public_key
+        self.private_key = private_key
 
         self.state = ProxyState()
 
@@ -55,7 +57,7 @@ class Proxy:
             logger.debug(f"#{id(ws)}: New connection from {ws.remote_address[0]}:{ws.remote_address[1]}")
             while True:
                 try:
-                    raw_message = await ws.recv()
+                    message = await ws.recv()
                 except websockets.exceptions.ConnectionClosedOK:
                     logger.info(f"#{id(ws)}: Connection closed")
                     logger.debug(f"#{id(ws)}: Cleaning up connection")
@@ -67,29 +69,12 @@ class Proxy:
                     self.remove_from_user(ws)
                     return
 
-                logger.debug(f"#{id(ws)}: Parsing message")
-
-                raw_message_slices = raw_message.split(".")
-                if len(raw_message_slices) != 2:
-                    logger.info(f"#{id(ws)}: Malformed message received: {raw_message}")
-                    continue
-
-                decoded_raw_message_slices = [
-                    utils.base64.decode_url_no_padding(msg_slice)
-                    for msg_slice in raw_message_slices
-                ]
-
+                logger.debug(f"#{id(ws)}: Deserializing message")
                 try:
-                    logger.debug(f"#{id(ws)}: Parsing payload")
-                    payload = Payload(**json.loads(decoded_raw_message_slices[0]))
-                except ValidationError as e:
-                    logger.debug(f"#{id(ws)}: Payload validation error: {e.json()}")
+                    payload = utils.message.deserialize(message, self.private_key)
+                except DeserializePayloadError as e:
+                    logger.debug(f"#{id(ws)}: Deserialize payload error: {e}")
                     continue
-                except json.decoder.JSONDecodeError as e:
-                    logger.debug(f"#{id(ws)}: Payload validation error (invalid JSON format): {e}")
-                    continue
-
-                signature = decoded_raw_message_slices[1]
 
                 intention = payload.details.intention
                 operation = payload.operation
@@ -98,13 +83,13 @@ class Proxy:
                     logger.debug(f"#{id(ws)}: Handling intention | {payload.sessionID}")
                     for handler in self.handlers[handler_key]:
                         logger.debug(f"#{id(ws)}: Calling intention handler#{id(handler)} | {payload.sessionID}")
-                        handler(ws, self.state, payload, signature, raw_message)
+                        handler(ws, self.state, payload, message)
                 if handler_key in self.async_handlers:
                     logger.debug(f"#{id(ws)}: Handling async intention | {payload.sessionID}")
                     for async_handler in self.async_handlers[handler_key]:
                         logger.debug(
                             f"#{id(ws)}: Awaiting async intention handler#{id(async_handler)} | {payload.sessionID}")
-                        await async_handler(ws, self.state, payload, signature, raw_message)
+                        await async_handler(ws, self.state, payload, message)
 
         return internal_handler
 

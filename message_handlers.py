@@ -21,7 +21,7 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_INIT)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_CONFIRM)
     async def on_general_broadcast_forwarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
-                                             signature: bytes, raw_message: str):
+                                              raw_message: str):
         logger.debug(f"Broadcasting message | {payload.sessionID}")
         users = state.users
         for user in users:
@@ -30,7 +30,7 @@ def register_to_proxy(proxy):
                 await client.send(raw_message)
 
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
-    async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload, signature: bytes,
+    async def on_system_join_network(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
                                      raw_message: str):
         logger.debug(f"Handling Intention: System | {payload.sessionID}")
 
@@ -52,7 +52,7 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.VOTE_SESSION_QUERY)
     async def on_broadcast_vote_session_query(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
-                                              signature: bytes, raw_message: str):
+                                              raw_message: str):
         compulsory_fields = ["userID", "votingSessionID", "votingValue"]
         for field in compulsory_fields:
             if field not in payload.data:
@@ -80,7 +80,7 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
     async def on_broadcast_update_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
-                                          signature: bytes, raw_message: str):
+                                          raw_message: str):
         compulsory_fields = ["userID", "firstName", "lastName", "email"]
         for field in compulsory_fields:
             if field not in payload.data:
@@ -103,7 +103,7 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
     async def on_broadcast_freeze_account(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
-                                          signature: bytes, raw_message: str):
+                                          raw_message: str):
         compulsory_fields = ["userID"]
         for field in compulsory_fields:
             if field not in payload.data:
@@ -118,7 +118,7 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCOUNT_INIT)
     async def on_broadcast_create_account_init(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
-                                               signature: bytes, raw_message: str):
+                                               raw_message: str):
         compulsory_fields = ["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
         for field in compulsory_fields:
             if field not in payload.data:
@@ -155,6 +155,6 @@ def register_to_proxy(proxy):
         state.votes[hashed_voting_id] = voting_session
         voting_session.start_voting()
 
-        await on_general_broadcast_forwarding(ws, state, payload, signature, raw_message)
+        await on_general_broadcast_forwarding(ws, state, payload, raw_message)
 
     logger.info("Handlers registered")

@@ -58,10 +58,11 @@ def main(config_path: str, debug: bool, init_database: bool):
             logger.info("Public and private key pair PEM files already exist, generation skipped")
     except RSAPrivateKeyLoadError:
         logger.critical("Failed to load existing private key")
+        return
 
     # create proxy instance
     logger.info("Creating proxy instance")
-    proxy = monolibro.Proxy(config.host, config.port)
+    proxy = monolibro.Proxy(config.host, config.port, public_key, private_key)
 
     # register message handlers
     logger.info("Registering intention handlers")
