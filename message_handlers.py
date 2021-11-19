@@ -2,8 +2,7 @@ from cryptography.hazmat.primitives import hashes
 from loguru import logger
 
 from database import database
-from monolibro import Context
-from monolibro import VotingSession
+from monolibro import VotingSession, Context
 from monolibro.models import Intention, Operation, User
 
 
