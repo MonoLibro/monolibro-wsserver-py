@@ -16,12 +16,12 @@ class VotingSession:
 
     def __init__(
             self,
-            voting_id: str,  # Key for quering the voting session
+            voting_id: str,  # Key for querying the voting session
             voting_context: Dict[str, any],  # Participation
             timeout: int = 10,  # Timeout in sec
-            success_callback: Callable[[], None] = None,  # Callback function when voting has done
-            fail_callback: Callable[[], None] = None,  # Callback function when voting has timeouted
-            vote_callback: Callable[[], None] = None  # Callback function when voting has timeouted
+            success_callback: Callable[[], None] = None,  # Callback function when the voting passed
+            fail_callback: Callable[[], None] = None,  # Callback function when the voting failed
+            vote_callback: Callable[[], None] = None  # Callback function for handling a new vote
     ):
 
         if "users" not in voting_context:
@@ -49,7 +49,7 @@ class VotingSession:
         return user_id in users
 
     def vote(self, user_id: str, vote: bool) -> None:
-        # If statement condiciton to be converted to enum
+        # If statement condition to be converted to enum
         if self.status != 1:
             # Exception to be converted to custom exception
             raise Exception("Voting is not allowed in this status")
@@ -63,7 +63,7 @@ class VotingSession:
         self.vote_callback(self)
 
         if self.has_vote_passed():
-            logger.debug(f"Voting Session {self.voting_id} has successfuly passed")
+            logger.debug(f"Voting Session {self.voting_id} has successfully passed")
             self.success_callback(self)
             self.status = 2
 

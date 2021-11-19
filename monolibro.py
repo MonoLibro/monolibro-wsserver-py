@@ -22,7 +22,7 @@ default_config = Config()
 @click.option("-d", "--debug",
               type=bool, default=False, is_flag=True,
               help="Debug mode.")
-@click.option("-i", "--initalizeDatabase", "init_database",
+@click.option("-i", "--init-db", "init_database",
               type=bool, default=False, is_flag=True,
               help="Wipe and re-initialize database.")
 @logger.catch()

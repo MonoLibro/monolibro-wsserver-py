@@ -20,7 +20,7 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.BROADCAST, Operation.COMMIT_ACTIVITY)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_INIT)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_CONFIRM)
-    async def on_general_broadcast_fowarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
+    async def on_general_broadcast_forwarding(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
                                              signature: bytes, raw_message: str):
         logger.debug(f"Broadcasting message | {payload.sessionID}")
         users = state.users
@@ -116,7 +116,7 @@ def register_to_proxy(proxy):
         user_record = database["Users"][user_id] = user_record
         database.commit()
 
-    @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCUONT_INIT)
+    @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCOUNT_INIT)
     async def on_broadcast_create_account_init(ws: WebSocketServerProtocol, state: ProxyState, payload: Payload,
                                                signature: bytes, raw_message: str):
         compulsory_fields = ["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
@@ -155,6 +155,6 @@ def register_to_proxy(proxy):
         state.votes[hashed_voting_id] = voting_session
         voting_session.start_voting()
 
-        await on_general_broadcast_fowarding(ws, state, payload, signature, raw_message)
+        await on_general_broadcast_forwarding(ws, state, payload, signature, raw_message)
 
     logger.info("Handlers registered")

@@ -86,7 +86,7 @@ class Proxy:
                     logger.debug(f"#{id(ws)}: Payload validation error: {e.json()}")
                     continue
                 except json.decoder.JSONDecodeError as e:
-                    logger.debug(f"#{id(ws)}: Payload validation error (invalid josn format): {e}")
+                    logger.debug(f"#{id(ws)}: Payload validation error (invalid JSON format): {e}")
                     continue
 
                 signature = decoded_raw_message_slices[1]
