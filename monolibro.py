@@ -5,11 +5,11 @@ import sys
 import click
 from loguru import logger
 
-import database
 import message_handlers
 import monolibro
 import utils
 from config import Config
+from database import Database
 from utils.pem import RSAPrivateKeyLoadError
 
 default_config = Config()
@@ -27,10 +27,12 @@ default_config = Config()
               help="Wipe and re-initialize database.")
 @logger.catch()
 def main(config_path: str, debug: bool, init_database: bool):
+    database = Database("db.sql")
+
     # initialize database
     if init_database:
         logger.info(f"Wiping and re-initializing database . . .")
-        database.database.force_reset()
+        database.force_reset()
 
     # setup logger
     logger.remove()
@@ -62,7 +64,7 @@ def main(config_path: str, debug: bool, init_database: bool):
 
     # create proxy instance
     logger.info("Creating proxy instance")
-    proxy = monolibro.Proxy(config.host, config.port, public_key, private_key)
+    proxy = monolibro.Proxy(config.host, config.port, database, public_key, private_key)
 
     # register message handlers
     logger.info("Registering intention handlers")

@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPriva
 from loguru import logger
 
 import utils
+from database import Database
 from utils.message import DeserializePayloadError
 from .context import Context
 from .message_handler import AsyncMessageHandler, MessageHandler
@@ -15,11 +16,12 @@ from .proxy_state import ProxyState
 
 
 class Proxy:
-    def __init__(self, ip: str, port: int, public_key: RSAPublicKey, private_key: RSAPrivateKey) -> None:
+    def __init__(self, ip: str, port: int, database: Database, public_key: RSAPublicKey,
+                 private_key: RSAPrivateKey) -> None:
         self.ip = ip
         self.port = port
 
-        self.state = ProxyState(public_key, private_key)
+        self.state = ProxyState(database, public_key, private_key)
 
         self.async_handlers: dict[(Intention, Operation), list[AsyncMessageHandler]] = {}
         self.handlers: dict[(Intention, Operation), list[MessageHandler]] = {}

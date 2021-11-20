@@ -1,7 +1,6 @@
 from cryptography.hazmat.primitives import hashes
 from loguru import logger
 
-from database import database
 from monolibro import VotingSession, Context
 from monolibro.models import Intention, Operation, User
 
@@ -88,12 +87,12 @@ def register_to_proxy(proxy):
         email = ctx.payload.data["email"]
 
         user_id = ctx.payload.data["userID"]
-        user_record = database["Users"][user_id][0]
+        user_record = ctx.state.database["Users"][user_id][0]
         user_record[1] = first_name
         user_record[2] = last_name
         user_record[3] = email
-        user_record = database["Users"][user_id] = user_record
-        database.commit()
+        user_record = ctx.state.database["Users"][user_id] = user_record
+        ctx.state.database.commit()
 
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
     async def on_broadcast_freeze_account(ctx: Context):
@@ -104,10 +103,10 @@ def register_to_proxy(proxy):
                     "A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
                 return
         user_id = ctx.payload.data["userID"]
-        user_record = database["Users"][user_id][0]
+        user_record = ctx.state.database["Users"][user_id][0]
         user_record[5] = 1
-        user_record = database["Users"][user_id] = user_record
-        database.commit()
+        user_record = ctx.state.database["Users"][user_id] = user_record
+        ctx.state.database.commit()
 
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCOUNT_INIT)
     async def on_broadcast_create_account_init(ctx: Context):
@@ -128,7 +127,7 @@ def register_to_proxy(proxy):
 
         def success_callback(session: VotingSession):
             del ctx.state.votes[hashed_voting_id]
-            database["Users"].insert([
+            ctx.state.database["Users"].insert([
                 ctx.payload.data["userID"],
                 ctx.payload.data["firstName"],
                 ctx.payload.data["lastName"],
@@ -136,7 +135,7 @@ def register_to_proxy(proxy):
                 ctx.payload.data["publicKey"],
                 0,
             ])
-            database.commit()
+            ctx.state.database.commit()
 
         def vote_callback(session: VotingSession):
             pass
