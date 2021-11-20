@@ -19,10 +19,7 @@ class Proxy:
         self.ip = ip
         self.port = port
 
-        self.public_key = public_key
-        self.private_key = private_key
-
-        self.state = ProxyState()
+        self.state = ProxyState(public_key, private_key)
 
         self.async_handlers: dict[(Intention, Operation), list[AsyncMessageHandler]] = {}
         self.handlers: dict[(Intention, Operation), list[MessageHandler]] = {}
@@ -72,7 +69,7 @@ class Proxy:
 
                 logger.debug(f"#{id(ws)}: Deserializing message")
                 try:
-                    payload = utils.message.deserialize(message, self.private_key)
+                    payload = utils.message.deserialize(message, self.state.private_key)
                 except DeserializePayloadError as e:
                     logger.debug(f"#{id(ws)}: Deserialize payload error: {e}")
                     continue
