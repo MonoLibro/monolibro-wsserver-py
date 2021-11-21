@@ -10,7 +10,7 @@ import monolibro
 import utils
 from config import Config
 from database import Database
-from utils.pem import RSAPrivateKeyLoadError
+from utils.pem import RSAPrivateKeyPEMLoadError
 
 default_config = Config()
 
@@ -58,7 +58,7 @@ def main(config_path: str, debug: bool, init_database: bool):
             logger.info("Public and private key pair PEM files generated")
         else:
             logger.info("Public and private key pair PEM files already exist, generation skipped")
-    except RSAPrivateKeyLoadError:
+    except RSAPrivateKeyPEMLoadError:
         logger.critical("Failed to load existing private key")
         return
 
