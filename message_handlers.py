@@ -1,6 +1,8 @@
 from cryptography.hazmat.primitives import hashes
 from loguru import logger
+from pydantic import ValidationError
 
+from models import CreateAccountInitData, JoinNetworkData, VoteSessionQueryData, UpdateAccountData, FreezeAccountData
 from monolibro import VotingSession, Context
 from monolibro.models import Intention, Operation, User
 
@@ -29,12 +31,14 @@ def register_to_proxy(proxy):
     async def on_system_join_network(ctx: Context):
         logger.debug(f"Handling Intention: System | {ctx.payload.sessionID}")
 
-        data = ctx.payload.data
-        if "userID" not in data:
+        try:
+            data = JoinNetworkData(**ctx.payload.data)
+        except ValidationError:
             logger.info("A client trys to join the network but rejected: Insufficient payload data")
             await ctx.ws.close()
             return
-        user_id = data["userID"]
+
+        user_id = data.userID
         if user_id not in ctx.state.users:
             ctx.state.users[user_id] = User(id=user_id)
         if ctx.ws not in ctx.state.users[user_id].clients:
@@ -47,15 +51,15 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.VOTE_SESSION_QUERY)
     async def on_broadcast_vote_session_query(ctx: Context):
-        compulsory_fields = ["userID", "votingSessionID", "votingValue"]
-        for field in compulsory_fields:
-            if field not in ctx.payload.data:
-                logger.warning("A client trys to vote with invalid payload data. Ignoring | {payload.sessionID}")
-                return
+        try:
+            data = VoteSessionQueryData(**ctx.payload.data)
+        except ValidationError:
+            logger.warning("A client trys to vote with invalid payload data. Ignoring | {payload.sessionID}")
+            return
 
-        user_id = ctx.payload.data["userID"]
-        voting_session_id = ctx.payload.data["votingSessionID"]
-        voting_value = ctx.payload.data["votingValue"]
+        user_id = data.userID
+        voting_session_id = data.votingSessionID
+        voting_value = data.votingValue
 
         if voting_session_id not in ctx.state.votes:
             logger.warning("A client trys to vote to non-exist voting session. Ignoring | {payload.sessionID}")
@@ -74,49 +78,50 @@ def register_to_proxy(proxy):
 
     @proxy.handler(Intention.BROADCAST, Operation.UPDATE_ACCOUNT)
     async def on_broadcast_update_account(ctx: Context):
-        compulsory_fields = ["userID", "firstName", "lastName", "email"]
-        for field in compulsory_fields:
-            if field not in ctx.payload.data:
-                logger.warning(
-                    "A client trys to update an account with invalid payload data. Ignoring | {payload.sessionID}")
-                return
+        try:
+            data = UpdateAccountData(**ctx.payload.data)
+        except ValidationError:
+            logger.warning(
+                "A client trys to update an account with invalid payload data. Ignoring | {payload.sessionID}")
+            return
 
-        user_id = ctx.payload.data["userID"]
-        first_name = ctx.payload.data["firstName"]
-        last_name = ctx.payload.data["lastName"]
-        email = ctx.payload.data["email"]
+        user_id = data.userID
+        first_name = data.firstName
+        last_name = data.lastName
+        email = data.email
 
-        user_id = ctx.payload.data["userID"]
         user_record = ctx.state.database["Users"][user_id][0]
         user_record[1] = first_name
         user_record[2] = last_name
         user_record[3] = email
-        user_record = ctx.state.database["Users"][user_id] = user_record
+        ctx.state.database["Users"][user_id] = user_record
         ctx.state.database.commit()
 
     @proxy.handler(Intention.BROADCAST, Operation.FREEZE_ACCOUNT)
     async def on_broadcast_freeze_account(ctx: Context):
-        compulsory_fields = ["userID"]
-        for field in compulsory_fields:
-            if field not in ctx.payload.data:
-                logger.warning(
-                    "A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
-                return
-        user_id = ctx.payload.data["userID"]
+        try:
+            data = FreezeAccountData(**ctx.payload.data)
+        except ValidationError:
+            logger.warning(
+                "A client trys to freeze an account with invalid payload data. Ignoring | {payload.sessionID}")
+            return
+
+        user_id = data.userID
         user_record = ctx.state.database["Users"][user_id][0]
         user_record[5] = 1
-        user_record = ctx.state.database["Users"][user_id] = user_record
+        ctx.state.database["Users"][user_id] = user_record
         ctx.state.database.commit()
 
     @proxy.handler(Intention.BROADCAST, Operation.CREATE_ACCOUNT_INIT)
     async def on_broadcast_create_account_init(ctx: Context):
-        compulsory_fields = ["userID", "firstName", "lastName", "email", "publicKey", "timestamp"]
-        for field in compulsory_fields:
-            if field not in ctx.payload.data:
-                logger.warning(
-                    "A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
-                return
-        voting_id = ctx.payload.data["userID"] + ctx.payload.data["timestamp"]
+        try:
+            data = CreateAccountInitData(**ctx.payload.data)
+        except ValidationError:
+            logger.warning(
+                "A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
+            return
+
+        voting_id = data.userID + str(int(data.timestamp.timestamp()))
         digest = hashes.Hash(hashes.SHA256())
         digest.update(voting_id.encode())
         hashed_voting_id = digest.finalize().hex().upper()
@@ -128,11 +133,11 @@ def register_to_proxy(proxy):
         def success_callback(session: VotingSession):
             del ctx.state.votes[hashed_voting_id]
             ctx.state.database["Users"].insert([
-                ctx.payload.data["userID"],
-                ctx.payload.data["firstName"],
-                ctx.payload.data["lastName"],
-                ctx.payload.data["email"],
-                ctx.payload.data["publicKey"],
+                data.userID,
+                data.firstName,
+                data.lastName,
+                data.email,
+                data.publicKey,
                 0,
             ])
             ctx.state.database.commit()
