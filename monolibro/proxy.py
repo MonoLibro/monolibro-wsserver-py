@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import json
 from typing import Union
 
 import websockets
@@ -60,7 +61,11 @@ class Proxy:
 
             pub_key_der = utils.der.dumps_rsa_public_key(self.state.public_key)
             pub_key_der_encoded = base64.b64encode(pub_key_der).decode()
-            await ws.send(pub_key_der_encoded)
+            await ws.send(json.dumps({
+                "format": "DER",
+                "encoding": "base64",
+                "publicKey": pub_key_der_encoded
+            }))
 
             while True:
                 try:
