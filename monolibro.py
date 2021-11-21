@@ -27,7 +27,16 @@ default_config = Config()
               help="Wipe and re-initialize database.")
 @logger.catch()
 def main(config_path: str, debug: bool, init_database: bool):
-    database = Database("db.sql")
+    database = Database("db.sql", {
+        "Users": [
+            ["userID", "char(32)", "PRIMARY KEY", "NOT NULL"],
+            ["firstName", "char(256)", "NOT NULL"],
+            ["lastName", "char(256)", "NOT NULL"],
+            ["email", "char(256)", "NOT NULL"],
+            ["publicKey", "text", "NOT NULL"],
+            ["frozen", "int(1)", "NOT NULL"],
+        ]
+    })
 
     # initialize database
     if init_database:

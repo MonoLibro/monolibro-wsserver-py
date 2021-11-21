@@ -4,19 +4,10 @@ from .table import Table
 
 
 class Database:
-    def __init__(self, database_name):
+    def __init__(self, database_name, schemas):
         self.name = database_name
         self.db = sqlite3.connect(database_name)
-        self.schemas = {
-            "Users": [
-                ["userID", "char(32)", "PRIMARY KEY", "NOT NULL"],
-                ["firstName", "char(256)", "NOT NULL"],
-                ["lastName", "char(256)", "NOT NULL"],
-                ["email", "char(256)", "NOT NULL"],
-                ["publicKey", "text", "NOT NULL"],
-                ["frozen", "int(1)", "NOT NULL"],
-            ]
-        }
+        self.schemas = schemas
 
     def __getitem__(self, table_name):
         if not (table_name in self.get_table_names()):
