@@ -1,10 +1,12 @@
 import asyncio
+import base64
 from typing import Union
 
 import websockets
 import websockets.exceptions
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey, RSAPrivateKey
 from loguru import logger
+from websockets.legacy.server import WebSocketServerProtocol
 
 import utils
 from database import Database
@@ -53,8 +55,13 @@ class Proxy:
         return wrapper
 
     def _get_internal_handlers(self):
-        async def internal_handler(ws, path):
+        async def internal_handler(ws: WebSocketServerProtocol, path):
             logger.debug(f"#{id(ws)}: New connection from {ws.remote_address[0]}:{ws.remote_address[1]}")
+
+            pub_key_der = utils.der.dumps_rsa_public_key(self.state.public_key)
+            pub_key_der_encoded = base64.b64encode(pub_key_der).decode()
+            await ws.send(pub_key_der_encoded)
+
             while True:
                 try:
                     message = await ws.recv()
