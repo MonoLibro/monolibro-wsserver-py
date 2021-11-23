@@ -5,6 +5,8 @@ from pydantic import ValidationError
 from models import CreateAccountInitData, JoinNetworkData, VoteSessionQueryData, UpdateAccountData, FreezeAccountData
 from monolibro import VotingSession, Context
 from monolibro.models import Intention, Operation, User
+from monolibro.models.details import Details
+from monolibro.models.payload import Payload
 
 
 def register_to_proxy(proxy):
@@ -30,7 +32,7 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
     async def on_system_join_network(ctx: Context):
         logger.debug(f"Handling Intention: System | {ctx.payload.sessionID}")
-
+        print("JOIN")
         try:
             data = JoinNetworkData(**ctx.payload.data)
         except ValidationError:
@@ -55,6 +57,22 @@ def register_to_proxy(proxy):
             data = VoteSessionQueryData(**ctx.payload.data)
         except ValidationError:
             logger.warning("A client trys to vote with invalid payload data. Ignoring | {payload.sessionID}")
+            voting_session_id = ""
+            if "votingSessionID" in ctx.payload.data:
+                voting_session_id = ctx.payload.data["votingSessionID"]
+            await ctx.ws.send(
+                Payload(
+                    version=1,
+                    sessionID=ctx.payload.sessionID,
+                    details=Details(intention=Intention.SYSTEM, target=""),
+                    operation=Operation.VOTE_SESSION_QUERY,
+                    data={
+                        "success": False,
+                        "reason": "InvalidPayload",
+                        "votingId": voting_session_id,
+                    }
+                ).json()
+            )
             return
 
         user_id = data.userID
@@ -63,6 +81,19 @@ def register_to_proxy(proxy):
 
         if voting_session_id not in ctx.state.votes:
             logger.warning("A client trys to vote to non-exist voting session. Ignoring | {payload.sessionID}")
+            await ctx.ws.send(
+                Payload(
+                    version=1,
+                    sessionID=ctx.payload.sessionID,
+                    details=Details(intention=Intention.SYSTEM, target=""),
+                    operation=Operation.VOTE_SESSION_QUERY,
+                    data={
+                        "success": False,
+                        "reason": "UnknownVote",
+                        "votingId": voting_session_id,
+                    }
+                ).json()
+            )
             return
 
         voting_session = ctx.state.votes[voting_session_id]
@@ -73,6 +104,22 @@ def register_to_proxy(proxy):
             user = voting_session.voting_context["users"][user_id]
             for connection in user.clients:
                 await connection.send(ctx.payload.json())
+
+        await ctx.ws.send(
+            Payload(
+                version=1,
+                sessionID=ctx.payload.sessionID,
+                details=Details(intention=Intention.SYSTEM, target=""),
+                operation=Operation.VOTE_SESSION_QUERY,
+                data={
+                    "success": True,
+                    "votingID": voting_session_id,
+                    "userCount": voting_session.get_total_user_count,
+                    "votedCount": voting_session.get_voted_user_count,
+                    "status": voting_session.status - 1,
+                }
+            ).json()
+        )
 
         voting_session.vote(user_id, voting_value)
 
@@ -121,36 +168,14 @@ def register_to_proxy(proxy):
                 "A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
             return
 
-        voting_id = data.userID + str(int(data.timestamp.timestamp()))
-        digest = hashes.Hash(hashes.SHA256())
-        digest.update(voting_id.encode())
-        hashed_voting_id = digest.finalize().hex().upper()
-
-        def fail_callback(session: VotingSession):
-            del ctx.state.votes[hashed_voting_id]
-            pass
-
-        def success_callback(session: VotingSession):
-            del ctx.state.votes[hashed_voting_id]
-            ctx.state.database["Users"].insert([
-                data.userID,
-                data.firstName,
-                data.lastName,
-                data.email,
-                data.publicKey,
-                0,
-            ])
-            ctx.state.database.commit()
-
-        def vote_callback(session: VotingSession):
-            pass
-
-        voting_session = VotingSession(hashed_voting_id, {"users": ctx.state.users}, timeout=10,
-                                       fail_callback=fail_callback, vote_callback=vote_callback,
-                                       success_callback=success_callback)
-        ctx.state.votes[hashed_voting_id] = voting_session
-        voting_session.start_voting()
-
-        await on_general_broadcast_forwarding(ctx)
+        ctx.state.database["Users"].insert([
+            data.userID,
+            data.firstName,
+            data.lastName,
+            data.email,
+            data.publicKey,
+            0,
+        ])
+        ctx.state.database.commit()
 
     logger.info("Handlers registered")
