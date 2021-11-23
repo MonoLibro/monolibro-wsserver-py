@@ -83,7 +83,7 @@ class Proxy:
 
                 logger.debug(f"#{id(ws)}: Deserializing message")
                 try:
-                    payload = utils.message.deserialize(message, self.state.private_key)
+                    payload, match = utils.message.deserialize(message, None)
                 except DeserializePayloadError as e:
                     logger.debug(f"#{id(ws)}: Deserialize payload error: {e}")
                     continue
