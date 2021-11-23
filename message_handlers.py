@@ -168,6 +168,7 @@ def register_to_proxy(proxy):
                 "A client trys to create an account with invalid payload data. Ignoring | {payload.sessionID}")
             return
 
+        del ctx.state.database["Users"][data.userID]
         ctx.state.database["Users"].insert([
             data.userID,
             data.firstName,
