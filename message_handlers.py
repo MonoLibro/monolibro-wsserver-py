@@ -179,6 +179,6 @@ def register_to_proxy(proxy):
         ])
         ctx.state.database.commit()
 
-        on_general_broadcast_forwarding(ctx)
+        await on_general_broadcast_forwarding(ctx)
 
     logger.info("Handlers registered")
