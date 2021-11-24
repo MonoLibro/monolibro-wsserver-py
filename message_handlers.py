@@ -40,7 +40,7 @@ def register_to_proxy(proxy):
 
         user_id = data.userID
         if user_id not in ctx.state.users:
-            ctx.state.users[user_id] = User(id=user_id)
+            ctx.state.users[user_id] = User(user_id=user_id)
         if ctx.ws not in ctx.state.users[user_id].clients:
             ctx.state.users[user_id].clients.append(ctx.ws)
             logger.info(f"A client of {user_id} has joined the network.")
