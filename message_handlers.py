@@ -20,6 +20,7 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.BROADCAST, Operation.COMMIT_ACTIVITY)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_INIT)
     @proxy.handler(Intention.BROADCAST, Operation.CLEAR_PAYMENT_CONFIRM)
+    @proxy.handler(Intention.BROADCAST, Operation.JOIN_ACTIVITY)
     async def on_general_broadcast_forwarding(ctx: Context):
         logger.debug(f"Broadcasting message | {ctx.payload.sessionID}")
         users = ctx.state.users
@@ -31,7 +32,6 @@ def register_to_proxy(proxy):
     @proxy.handler(Intention.SYSTEM, Operation.JOIN_NETWORK)
     async def on_system_join_network(ctx: Context):
         logger.debug(f"Handling Intention: System | {ctx.payload.sessionID}")
-        print("JOIN")
         try:
             data = JoinNetworkData(**ctx.payload.data)
         except ValidationError:
@@ -179,5 +179,13 @@ def register_to_proxy(proxy):
         ctx.state.database.commit()
 
         await on_general_broadcast_forwarding(ctx)
+
+    @proxy.handler(Intention.SPECIFIC, Operation.JOIN_ACTIVITY_DATA)
+    async def on_specific_join_activity_data(ctx: Context):
+        foward = ctx.payload.details.target
+        if foward not in ctx.state.users:
+            return
+        for connection in ctx.state.users[foward].clients:
+            await connection.send(ctx.payload.json())
 
     logger.info("Handlers registered")
